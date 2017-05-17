@@ -47,88 +47,119 @@ def outputMalformedRows(dataset):
             if not row[6].startswith("https://"):
                 print(counter)
 
-# Downloads count random images for the dataset and puts them in images/
-# Makes a new dataset file recording the filenames for the entries we chose.
-def downloadImages(dataset, output, thumbnailSize, count=None):
+def createMiniDataset(dataset, newFilename, size=100):
     with open(dataset, 'rb') as datasetFile:
-        with open(output, 'wb') as outputFile:
+        with open(newFilename, 'wb') as outputFile:
             writer = csv.writer(outputFile, delimiter=',')
             reader = csv.reader(datasetFile, delimiter=',')
 
             counter = 0
-            rows = [row for row in reader if row[6].startswith("https://")]
-            writer.writerow(rows[0] + ['Filename'])
-            rows = rows[1:]
+            rows = [row for row in reader if row[6].startswith("https://")][1:]
 
-            if count == None: count = len(rows)
-
-            while count > 0:
-                index = random.randint(0, len(rows)) # Pick random index
+            while size > 0:
+                index = random.randint(0, len(rows) - 1) # Pick random index
                 row = rows[index]
                 filename = str(index) + ".jpg"
 
                 try:
                     urllib.urlretrieve(row[6], "images/" + filename)
                     img = Image.open("images/" + filename)
-                    img = img.resize(thumbnailSize)
+                    img = img.resize((200, 200))
                     img.save("images/" + filename)
-                    writer.writerow(row + [filename])
-                    print(str(count) + " - " + row[1])
+                    writer.writerow([row[0], filename])
+                    print(str(size) + " - " + row[1])
                     del rows[index]
-                    count -= 1
+                    size -= 1
                 except Exception as e:
-                    print(row[1] + " - error: " + str(e))
+                    print(row[1] + " - error: " + str(e))   
+
 
 # Returns an N x 200 x 400 x 3 tensor representing our input
 def readData(filename, pairs=100):
     with open(filename, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        rows = [row for row in reader]
-
-        # We want 50% same, 50% different
-        numSame = pairs / 2
-        numDifferent = pairs / 2
 
         input = []   # Build up our input tensor
         ys = []      # The labels for each input
+    
+        for row in reader:
+            input.append(loadImages(row[0], row[1]))
+            ys.append(row[2])
 
-        # Add random pairs
-        while (numSame + numDifferent > 0):
-            index1 = random.randint(0, len(rows) - 1)
-            index2 = random.randint(0, len(rows) - 1)
-            sameTheme = rows[index1][0] == rows[index2][0]
-
-            # Add them if we still need another same or different
-            if (sameTheme and numSame > 0) or (not sameTheme and numDifferent > 0):
-                if sameTheme:
-                    numSame -= 1
-                else:
-                    numDifferent -= 1
-                input.append(loadImages(rows[index1][1], rows[index2][1]))
-                ys.append(1 if sameTheme else 0)
-
-        # Shuffle
-        indices = np.arange(len(input))
-        np.random.shuffle(indices)
-        shuffled_input = []
-        shuffled_ys = []
-        for index in indices:
-            shuffled_input.append(input[index])
-            shuffled_ys.append(ys[index])
-
-        return (np.concatenate(shuffled_input), np.array(shuffled_ys))
+        return (np.concatenate(input), np.array(ys))
 
 
 # Loads the two images in and returns a tensor of them concatenated together on axis 1
 def loadImages(filename1, filename2):
     image1 = misc.imread("images/" + filename1)
+    if len(image1.shape) != 3:
+        newImage1 = np.zeros(image1.shape + (3,))
+        for row in range(image1.shape[0]):
+            for col in range(image1.shape[1]):
+                newImage1[row][col][0] = image1[row][col]
+                newImage1[row][col][1] = image1[row][col]
+                newImage1[row][col][2] = image1[row][col]
+        image1 = newImage1
+
     image2 = misc.imread("images/" + filename2)
+    if len(image2.shape) != 3:
+        newImage2 = np.zeros(image2.shape + (3,))
+        for row in range(image2.shape[0]):
+            for col in range(image2.shape[1]):
+                newImage2[row][col][0] = image2[row][col]
+                newImage2[row][col][1] = image2[row][col]
+                newImage2[row][col][2] = image2[row][col]
+        image2 = newImage2
+
     c = np.concatenate((image1, image2), axis=1)
     return c.reshape([1] + list(c.shape))
 
-#outputThemeCounts('dataset.csv', 'theme-counts.csv')
-#outputMalformedRows('dataset.csv')
-#downloadImages('dataset.csv', 'datset-mini.csv', (200, 200), count=100)
+
+def createPairsDataset(datasetFile, output, pairs=100):
+    with open(datasetFile, 'rb') as csvfile:
+        with open(output, 'wb') as outputFile:
+            writer = csv.writer(outputFile, delimiter=',')
+            reader = csv.reader(csvfile, delimiter=',')
+
+            rows = [row for row in reader]
+            newRows = []
+
+            # We want 50% same, 50% different
+            numSame = pairs / 2
+            numDifferent = pairs / 2
+
+            # Add random pairs
+            while (numSame + numDifferent > 0):
+                index1 = random.randint(0, len(rows) - 1)
+                index2 = random.randint(0, len(rows) - 1)
+                sameTheme = rows[index1][0] == rows[index2][0]
+
+                # Add them if we still need another same or different
+                if (sameTheme and numSame > 0) or (not sameTheme and numDifferent > 0):
+                    if sameTheme:
+                        numSame -= 1
+                    else:
+                        numDifferent -= 1
+                    newRows.append([rows[index1][1], rows[index2][1], 1 if sameTheme else 0])
+
+            # Shuffle
+            np.random.shuffle(newRows)
+            for row in newRows:
+                writer.writerow(row)
+
+
+def loadPaintingsDataset():
+    X_train, y_train = readData('train-final.csv')
+    X_val, y_val = readData('dev-final.csv')
+    X_test, y_test = readData('test-final.csv')
+    return {
+        "X_train": X_train,
+        "y_train": y_train,
+        "X_val": X_val,
+        "y_val": y_val,
+        "X_test": X_test,
+        "y_test": y_test
+    }
 
 # SAMPLE CODE
 
@@ -137,4 +168,10 @@ def loadImages(filename1, filename2):
 # (100,) is a 1-hot vector of labels where 1 means same theme, 0 means different
 # input, labels = readData('dataset-mini.csv')
 
+# createMiniDataset("dataset.csv", "train.csv")
+# createMiniDataset("dataset.csv", "dev.csv")
+# createMiniDataset("dataset.csv", "test.csv")
+# createPairsDataset("train.csv", "train-final.csv")
+# createPairsDataset("dev.csv", "dev-final.csv")
+# createPairsDataset("test.csv", "test-final.csv")
 
