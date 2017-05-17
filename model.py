@@ -86,7 +86,7 @@ tf.reset_default_graph()
 
 # define our input (e.g. the data that changes every batch)
 # The first dim is None, and gets sets automatically based on batch size fed in
-X = tf.placeholder(tf.float32, [None, 200, 200, 3])
+X = tf.placeholder(tf.float32, [None, 400, 200, 3])
 y = tf.placeholder(tf.int64, [None])
 is_training = tf.placeholder(tf.bool)
 
@@ -96,7 +96,7 @@ def model(X,y,is_training):
     # setup variables
     Wconv1 = tf.get_variable("Wconv1", shape=[7, 7, 3, 5])
     bconv1 = tf.get_variable("bconv1", shape=[5])
-    W1 = tf.get_variable("W1", shape=[50000, 1024])
+    W1 = tf.get_variable("W1", shape=[100000, 1024])
     b1 = tf.get_variable("b1", shape=[1024])
     W2 = tf.get_variable("W2", shape=[1024, 2])
     b2 = tf.get_variable("b2", shape=[2])
@@ -107,7 +107,7 @@ def model(X,y,is_training):
     y_out = tf.nn.relu(y_out)
     y_out = tf.layers.batch_normalization(y_out, axis=3, training=is_training)
     y_out = tf.layers.max_pooling2d(y_out, 2, 2, padding='SAME')
-    y_out = tf.reshape(y_out,[-1, 50000])
+    y_out = tf.reshape(y_out,[-1, 100000])
     y_out = tf.matmul(y_out, W1) + b1
     y_out = tf.nn.relu(y_out)
     y_out = tf.matmul(y_out, W2) + b2
