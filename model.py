@@ -3,12 +3,13 @@ import numpy as np
 import math
 import timeit
 import matplotlib.pyplot as plt
+from dataset import processing
 
 from cs231n.data_utils import load_CIFAR10
 
 def get_art_data(num_training=49000, num_validation=1000, num_test=10000):
-    # get art data, divide into train, valid, test
-    pass
+    # This has keys X_train, y_train, X_val, y_val, X_test, y_test (all 100)
+    return processing.loadPaintingsDataset()
 
 def run_model(session, predict, loss_val, Xd, yd,
               epochs=1, batch_size=64, print_every=100,
