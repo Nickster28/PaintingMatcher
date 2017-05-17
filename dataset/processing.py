@@ -4,18 +4,19 @@ import csv
 def outputThemeCounts(dataset, output):
     with open(dataset, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        counter = 0
-        theme_dict = {}
+        atStart = True
+        themeDict = {}
 
         for row in reader:
-            counter += 1;
-            if counter == 1: continue
+            if atStart:
+                atStart = False
+                continue
 
             # Theme
-            if row[0] in theme_dict:
-                theme_dict[row[0]] += 1
+            if row[0] in themeDict:
+                themeDict[row[0]] += 1
             else:
-                theme_dict[row[0]] = 1
+                themeDict[row[0]] = 1
 
         # Output theme counts
         with open(output, 'wb') as csvfile:
@@ -23,8 +24,24 @@ def outputThemeCounts(dataset, output):
 
             # Theme
             writer.writerow(["Themes"])
-            for key in theme_dict:
+            for key in themeDict:
                 key = unicode(key, "utf-8")
-                writer.writerow([key, theme_dict[key]])
+                writer.writerow([key, themeDict[key]])
 
-outputThemeCounts('dataset.csv', 'theme-counts.csv')
+def outputMalformedRows(dataset):
+    with open(dataset, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',')
+        counter = 0
+
+        for row in reader:
+            counter += 1
+            if counter == 1:
+                continue
+
+            if not row[6].startswith("https://"):
+                print(counter)
+
+#outputThemeCounts('dataset.csv', 'theme-counts.csv')
+outputMalformedRows('dataset.csv')
+
+
