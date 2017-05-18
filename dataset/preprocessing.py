@@ -12,7 +12,7 @@ import os
 # and outputs this trimmed dataset to the given output filename.
 def trimDataset(filename, output, headerRow=False):
     topTenThemes = getTopTenThemes(filename, headerRow=headerRow)
-    trimDatasetToThemes(filename, output, topTenThemes, headerRow=headerRow)
+    trimDatasetToThemes(filename, output, topTenThemes)
 
 
 # Returns the top 10 themes in the dataset with the given filename
@@ -30,16 +30,18 @@ def trimDatasetToThemes(filename, output, themes, headerRow=False, limit=1000):
         with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
             writer = csv.writer(outputfile, delimiter=',')
-            rows = [row for row in reader]
-            if headerRow:
-                rows = rows[1:]
+            rows = [row for row in reader if row[6].startswith("https://")]
 
             themesCounter = Counter()
             np.random.shuffle(rows)
-            for row in rows:
+            for i, row in enumerate(rows):
+                print(i)
                 if row[0] in themes and themesCounter[row[0]] < limit:
-                    writer.writerow(row)
-                    themesCounter[row[0]] += 1
+                    filename = str(i) + ".jpg"
+                    success = saveImage(row[6], "images/" + filename)
+                    if success:
+                        writer.writerow([row[0], filename])
+                        themesCounter[row[0]] += 1
 
 # Outputs the number of paintings under each theme for the given dataset file
 def outputThemeCounts(filename, output, headerRow=False):
@@ -57,46 +59,24 @@ def outputThemeCounts(filename, output, headerRow=False):
 # Outputs to file a list of randomly-chosen pairs from filename.  Downloads the
 # images for the pairs, and records their filenames and whether they are the
 # same or different thematically.
-def makePairings(filename, output, headerRow=False, pairs=100, size=(200,200)):
+def makePairings(filename, output, headerRow=False, pairs=100):
     with open(filename, 'rb') as csvfile:
         with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
             writer = csv.writer(outputfile, delimiter=',')
         
-            rows = [row for row in reader if row[6].startswith("https://")]
-            if headerRow:
-                rows = rows[1:]
-            counter = 0
-
-            # Sample until we have enough pairs
-            while counter < pairs:
-                print(str(counter) + " of " + str(pairs))
-                index1 = random.randint(0, len(rows) - 1)
-                index2 = random.randint(0, len(rows) - 1)
-                row1 = rows[index1]
-                row2 = rows[index2]
-                filename1 = "images/" + str(index1) + ".jpg"
-                filename2 = "images/" + str(index2) + ".jpg"
-                success1 = saveImage(row1[6], filename1, size)
-                if not success1: continue
-                success2 = saveImage(row2[6], filename2, size)
-                if not success2:
-                    os.remove(filename1)
-                    continue
-
+            for i in range(pairs):
+                row1 = rows[random.randint(0, len(rows) - 1)]
+                row2 = rows[random.randint(0, len(rows) - 1)]
                 sameTheme = row1[0] == row2[0]
-                writer.writerow([filename1, filename2, 1 if sameTheme else 0])
-                counter += 1
+                writer.writerow([row1[1], row2[1], 1 if sameTheme else 0])
 
 
-# Downloads image and resizes them.
+# Downloads image.
 # Returns true/false for success/failure.
-def saveImage(url, filename, size):
+def saveImage(url, filename):
     try:
         urllib.urlretrieve(url, filename)
-        img = Image.open(filename)
-        img = img.resize(size)
-        img.save(filename)
         return True
     except Exception as e:
         return False
