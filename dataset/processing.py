@@ -76,7 +76,7 @@ def createMiniDataset(dataset, newFilename, size=100):
 
 # Returns an N x 200 x 400 x 3 tensor representing our input
 def readData(filename, pairs=100):
-    with open(filename, 'rb') as csvfile:
+    with open("dataset/" + filename, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
 
         input = []   # Build up our input tensor
@@ -91,7 +91,7 @@ def readData(filename, pairs=100):
 
 # Loads the two images in and returns a tensor of them concatenated together on axis 1
 def loadImages(filename1, filename2):
-    image1 = misc.imread("images/" + filename1)
+    image1 = misc.imread("dataset/images/" + filename1)
     if len(image1.shape) != 3:
         newImage1 = np.zeros(image1.shape + (3,))
         for row in range(image1.shape[0]):
@@ -101,7 +101,7 @@ def loadImages(filename1, filename2):
                 newImage1[row][col][2] = image1[row][col]
         image1 = newImage1
 
-    image2 = misc.imread("images/" + filename2)
+    image2 = misc.imread("dataset/images/" + filename2)
     if len(image2.shape) != 3:
         newImage2 = np.zeros(image2.shape + (3,))
         for row in range(image2.shape[0]):
@@ -149,17 +149,7 @@ def createPairsDataset(datasetFile, output, pairs=100):
 
 
 def loadPaintingsDataset():
-    X_train, y_train = readData('train-final.csv')
-    X_val, y_val = readData('dev-final.csv')
-    X_test, y_test = readData('test-final.csv')
-    return {
-        "X_train": X_train,
-        "y_train": y_train,
-        "X_val": X_val,
-        "y_val": y_val,
-        "X_test": X_test,
-        "y_test": y_test
-    }
+    return readData('train-final.csv') + readData('dev-final.csv') + readData('test-final.csv')
 
 # SAMPLE CODE
 
