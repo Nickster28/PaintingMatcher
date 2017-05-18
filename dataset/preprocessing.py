@@ -5,40 +5,48 @@ import random
 from scipy import misc
 import numpy as np
 from collections import Counter
+import os
 
 
 # Trims the dataset with the given filename to the top 10 painting themes,
 # and outputs this trimmed dataset to the given output filename.
-def trimDataset(filename, output):
-    topTenThemes = getTopTenThemes(filename)
-    trimDatasetToThemes(filename, output, topTenThemes)
+def trimDataset(filename, output, headerRow=False):
+    topTenThemes = getTopTenThemes(filename, headerRow=headerRow)
+    trimDatasetToThemes(filename, output, topTenThemes, headerRow=headerRow)
 
 
 # Returns the top 10 themes in the dataset with the given filename
-def getTopTenThemes(filename):
+def getTopTenThemes(filename, headerRow=False):
     with open(filename, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        themesCounter = Counter([row[0] for row in reader][1:])
+        rows = [row[0] for row in reader]
+        themesCounter = Counter(rows[1:] if headerRow else rows)
         return [entry[0] for entry in themesCounter.most_common(10)]
 
-# Outputs only the rows in filename where the theme is contained in themes.
-# Outputs these rows to the output filename.
-def trimDatasetToThemes(filename, output, themes):
+# Outputs only limit rows per theme in filename where the theme is contained in
+# themes.  Picks rows randomly.  Outputs these rows to the output filename.
+def trimDatasetToThemes(filename, output, themes, headerRow=False, limit=1000):
     with open(filename, 'rb') as csvfile:
         with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
             writer = csv.writer(outputfile, delimiter=',')
-            rows = [row for row in reader][1:]
+            rows = [row for row in reader]
+            if headerRow:
+                rows = rows[1:]
 
+            themesCounter = Counter()
+            np.random.shuffle(rows)
             for row in rows:
-                if row[0] in themes:
+                if row[0] in themes and themesCounter[row[0]] < limit:
                     writer.writerow(row)
+                    themesCounter[row[0]] += 1
 
 # Outputs the number of paintings under each theme for the given dataset file
-def outputThemeCounts(filename, output):
+def outputThemeCounts(filename, output, headerRow=False):
     with open(filename, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        themesCounter = Counter([row[0] for row in reader][1:])
+        rows = [row[0] for row in reader]
+        themesCounter = Counter(rows[1:] if headerRow else rows)
 
         # Output theme counts
         with open(output, 'wb') as csvfile:
@@ -46,64 +54,53 @@ def outputThemeCounts(filename, output):
             for themeTuple in themesCounter.most_common():
                 writer.writerow(themeTuple)
 
-
-
-
-
-def createMiniDataset(dataset, newFilename, size=100):
-    with open(dataset, 'rb') as datasetFile:
-        with open(newFilename, 'wb') as outputFile:
-            writer = csv.writer(outputFile, delimiter=',')
-            reader = csv.reader(datasetFile, delimiter=',')
-
-            counter = 0
-            rows = [row for row in reader if row[6].startswith("https://")][1:]
-
-            while size > 0:
-                index = random.randint(0, len(rows) - 1) # Pick random index
-                row = rows[index]
-                filename = str(index) + ".jpg"
-
-                try:
-                    urllib.urlretrieve(row[6], "images/" + filename)
-                    img = Image.open("images/" + filename)
-                    img = img.resize((200, 200))
-                    img.save("images/" + filename)
-                    writer.writerow([row[0], filename])
-                    print(str(size) + " - " + row[1])
-                    del rows[index]
-                    size -= 1
-                except Exception as e:
-                    print(row[1] + " - error: " + str(e))
-
-def createPairsDataset(datasetFile, output, pairs=100):
-    with open(datasetFile, 'rb') as csvfile:
-        with open(output, 'wb') as outputFile:
-            writer = csv.writer(outputFile, delimiter=',')
+# Outputs to file a list of randomly-chosen pairs from filename.  Downloads the
+# images for the pairs, and records their filenames and whether they are the
+# same or different thematically.
+def makePairings(filename, output, headerRow=False, pairs=100, size=(200,200)):
+    with open(filename, 'rb') as csvfile:
+        with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
+            writer = csv.writer(outputfile, delimiter=',')
+        
+            rows = [row for row in reader if row[6].startswith("https://")]
+            if headerRow:
+                rows = rows[1:]
+            counter = 0
 
-            rows = [row for row in reader]
-            newRows = []
-
-            # We want 50% same, 50% different
-            numSame = pairs / 2
-            numDifferent = pairs / 2
-
-            # Add random pairs
-            while (numSame + numDifferent > 0):
+            # Sample until we have enough pairs
+            while counter < pairs:
+                print(str(counter) + " of " + str(pairs))
                 index1 = random.randint(0, len(rows) - 1)
                 index2 = random.randint(0, len(rows) - 1)
-                sameTheme = rows[index1][0] == rows[index2][0]
+                row1 = rows[index1]
+                row2 = rows[index2]
+                filename1 = "images/" + str(index1) + ".jpg"
+                filename2 = "images/" + str(index2) + ".jpg"
+                success1 = saveImage(row1[6], filename1, size)
+                if not success1: continue
+                success2 = saveImage(row2[6], filename2, size)
+                if not success2:
+                    os.remove(filename1)
+                    continue
 
-                # Add them if we still need another same or different
-                if (sameTheme and numSame > 0) or (not sameTheme and numDifferent > 0):
-                    if sameTheme:
-                        numSame -= 1
-                    else:
-                        numDifferent -= 1
-                    newRows.append([rows[index1][1], rows[index2][1], 1 if sameTheme else 0])
+                sameTheme = row1[0] == row2[0]
+                writer.writerow([filename1, filename2, 1 if sameTheme else 0])
+                counter += 1
 
-            # Shuffle
-            np.random.shuffle(newRows)
-            for row in newRows:
-                writer.writerow(row)   
+
+# Downloads image and resizes them.
+# Returns true/false for success/failure.
+def saveImage(url, filename, size):
+    try:
+        urllib.urlretrieve(url, filename)
+        img = Image.open(filename)
+        img = img.resize(size)
+        img.save(filename)
+        return True
+    except Exception as e:
+        return False
+
+trimDataset('dataset.csv', 'dataset-trimmed.csv', headerRow=True)
+outputThemeCounts('dataset-trimmed.csv', 'themes-tr.csv')
+makePairings('dataset-trimmed.csv', 'dataset-trimmed-pairs.csv', pairs=100000)
