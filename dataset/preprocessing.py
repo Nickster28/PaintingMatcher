@@ -25,12 +25,13 @@ def getTopTenThemes(filename, headerRow=False):
 
 # Outputs only limit rows per theme in filename where the theme is contained in
 # themes.  Picks rows randomly.  Outputs these rows to the output filename.
-def trimDatasetToThemes(filename, output, themes, headerRow=False, limit=1000):
+def trimDatasetToThemes(filename, output, themes, limit=1000):
     with open(filename, 'rb') as csvfile:
         with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
             writer = csv.writer(outputfile, delimiter=',')
             rows = [row for row in reader if row[6].startswith("https://")]
+            newRows = []
 
             themesCounter = Counter()
             np.random.shuffle(rows)
@@ -40,8 +41,13 @@ def trimDatasetToThemes(filename, output, themes, headerRow=False, limit=1000):
                     filename = str(i) + ".jpg"
                     success = saveImage(row[6], "images/" + filename)
                     if success:
-                        writer.writerow([row[0], filename])
+                        newRows.append([row[0], filename])
                         themesCounter[row[0]] += 1
+
+            # Shuffle before writing out
+            np.random.shuffle(newRows)
+            for row in newRows:
+                writer.writerow(row)
 
 # Outputs the number of paintings under each theme for the given dataset file
 def outputThemeCounts(filename, output, headerRow=False):
@@ -59,11 +65,12 @@ def outputThemeCounts(filename, output, headerRow=False):
 # Outputs to file a list of randomly-chosen pairs from filename.  Downloads the
 # images for the pairs, and records their filenames and whether they are the
 # same or different thematically.
-def makePairings(filename, output, headerRow=False, pairs=100):
+def makePairings(filename, output, pairs=100):
     with open(filename, 'rb') as csvfile:
         with open(output, 'wb') as outputfile:
             reader = csv.reader(csvfile, delimiter=',')
             writer = csv.writer(outputfile, delimiter=',')
+            rows = [row for row in reader]
         
             for i in range(pairs):
                 row1 = rows[random.randint(0, len(rows) - 1)]
@@ -81,6 +88,6 @@ def saveImage(url, filename):
     except Exception as e:
         return False
 
-trimDataset('dataset.csv', 'dataset-trimmed.csv', headerRow=True)
-outputThemeCounts('dataset-trimmed.csv', 'themes-tr.csv')
-makePairings('dataset-trimmed.csv', 'dataset-trimmed-pairs.csv', pairs=100000)
+#trimDataset('dataset.csv', 'dataset-trimmed.csv', headerRow=True)
+#outputThemeCounts('dataset-trimmed.csv', 'themes-tr.csv')
+#makePairings('dataset-trimmed.csv', 'dataset-trimmed-pairs.csv', pairs=100000)
