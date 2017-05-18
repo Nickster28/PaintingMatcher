@@ -71,7 +71,39 @@ def createMiniDataset(dataset, newFilename, size=100):
                     del rows[index]
                     size -= 1
                 except Exception as e:
-                    print(row[1] + " - error: " + str(e))   
+                    print(row[1] + " - error: " + str(e))
+
+def createPairsDataset(datasetFile, output, pairs=100):
+    with open(datasetFile, 'rb') as csvfile:
+        with open(output, 'wb') as outputFile:
+            writer = csv.writer(outputFile, delimiter=',')
+            reader = csv.reader(csvfile, delimiter=',')
+
+            rows = [row for row in reader]
+            newRows = []
+
+            # We want 50% same, 50% different
+            numSame = pairs / 2
+            numDifferent = pairs / 2
+
+            # Add random pairs
+            while (numSame + numDifferent > 0):
+                index1 = random.randint(0, len(rows) - 1)
+                index2 = random.randint(0, len(rows) - 1)
+                sameTheme = rows[index1][0] == rows[index2][0]
+
+                # Add them if we still need another same or different
+                if (sameTheme and numSame > 0) or (not sameTheme and numDifferent > 0):
+                    if sameTheme:
+                        numSame -= 1
+                    else:
+                        numDifferent -= 1
+                    newRows.append([rows[index1][1], rows[index2][1], 1 if sameTheme else 0])
+
+            # Shuffle
+            np.random.shuffle(newRows)
+            for row in newRows:
+                writer.writerow(row)   
 
 
 # Returns an N x 200 x 400 x 3 tensor representing our input
@@ -115,53 +147,7 @@ def loadImages(filename1, filename2):
     return c.reshape([1] + list(c.shape))
 
 
-def createPairsDataset(datasetFile, output, pairs=100):
-    with open(datasetFile, 'rb') as csvfile:
-        with open(output, 'wb') as outputFile:
-            writer = csv.writer(outputFile, delimiter=',')
-            reader = csv.reader(csvfile, delimiter=',')
-
-            rows = [row for row in reader]
-            newRows = []
-
-            # We want 50% same, 50% different
-            numSame = pairs / 2
-            numDifferent = pairs / 2
-
-            # Add random pairs
-            while (numSame + numDifferent > 0):
-                index1 = random.randint(0, len(rows) - 1)
-                index2 = random.randint(0, len(rows) - 1)
-                sameTheme = rows[index1][0] == rows[index2][0]
-
-                # Add them if we still need another same or different
-                if (sameTheme and numSame > 0) or (not sameTheme and numDifferent > 0):
-                    if sameTheme:
-                        numSame -= 1
-                    else:
-                        numDifferent -= 1
-                    newRows.append([rows[index1][1], rows[index2][1], 1 if sameTheme else 0])
-
-            # Shuffle
-            np.random.shuffle(newRows)
-            for row in newRows:
-                writer.writerow(row)
-
-
 def loadPaintingsDataset():
     return readData('train-final.csv') + readData('dev-final.csv') + readData('test-final.csv')
 
-# SAMPLE CODE
-
-# Returns (100, 200, 400, 3) and (100,) tensors
-# (100, 200, 400, 3) is 100 concatenated images of size 200x200x3
-# (100,) is a 1-hot vector of labels where 1 means same theme, 0 means different
-# input, labels = readData('dataset-mini.csv')
-
-# createMiniDataset("dataset.csv", "train.csv")
-# createMiniDataset("dataset.csv", "dev.csv")
-# createMiniDataset("dataset.csv", "test.csv")
-# createPairsDataset("train.csv", "train-final.csv")
-# createPairsDataset("dev.csv", "dev-final.csv")
-# createPairsDataset("test.csv", "test-final.csv")
 
