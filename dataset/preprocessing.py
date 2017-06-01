@@ -1,3 +1,6 @@
+# This script is for initially generating the dataset-trimmed-pairs.csv file
+# containing the pairings of files and similarity scores used in all 3 datsets.
+
 import csv
 import urllib
 from PIL import Image
