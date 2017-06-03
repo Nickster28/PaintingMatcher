@@ -279,18 +279,23 @@ list containing [PAINTING1, PAINTING2, LABEL].
 ---------------------------------------
 '''
 def createTrainValTestDatasets():
-	dataset = generatePairsDataset(360000, themesToUse = [
-		"female-portraits",
-		"male-portraits",
-		"forests-and-trees",
-		"houses-and-buildings",
-		"mountains",
-		"boats-and-ships",
-		"animals",
-		"roads-and-vehicles",
-		"fruits-and-vegetables",
-		"flowers-and-plants"
-	])
+	# Load the dataset from the pickle file or recreate as a backup
+	try:
+		dataset = pickle.load(open("trainvaltestdataset.pickle", "rb"))
+	except:
+		dataset = generatePairsDataset(360000, themesToUse = [
+			"female-portraits",
+			"male-portraits",
+			"forests-and-trees",
+			"houses-and-buildings",
+			"mountains",
+			"boats-and-ships",
+			"animals",
+			"roads-and-vehicles",
+			"fruits-and-vegetables",
+			"flowers-and-plants"
+		])
+		pickle.dump(dataset, open("trainvaltestdataset.pickle", "wb"))
 
 	labeledDataset = []
 
@@ -441,6 +446,6 @@ def getDatasetResizeStack(width, height):
 
 
 
-
+createTrainValTestDatasets()
 
 
