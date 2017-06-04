@@ -139,6 +139,22 @@ def main(args):
 
                 resized_images.append(centered_image)
 
+                # Produce color histogram
+                with tf.variable_scope('color_hist_producer') as scope:
+                    bin_size = 0.2
+                    hist_entries = []
+                    # Split image into single channels
+                    img_r, img_g, img_b = tf.split(centered_image, 3, 2)
+                    for img_chan in [img_r, img_g, img_b]:
+                        for idx, i in enumerate(np.arange(-1, 1, bin_size)):
+                            gt = tf.greater(img_chan, i)
+                            leq = tf.less_equal(img_chan, i + bin_size)
+                            # Put together with logical_and, cast to float and sum up entries -> gives count for current bin.
+                            hist_entries.append(tf.reduce_sum(tf.cast(tf.logical_and(gt, leq), tf.float32)))
+
+                    # Pack scalars together to a tensor, then normalize histogram.
+                    hist = tf.nn.l2_normalize(tf.pack(hist_entries), 0)
+
             new_label = [0, 1] if label == 1 else [1, 0]
 
             #return tf.concat(resized_images, 2), new_label
