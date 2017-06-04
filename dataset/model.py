@@ -155,7 +155,7 @@ def main(args):
         # threads and apply the preprocessing in parallel, and then batch the data
 
         # Training dataset
-        train_pairs = map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), train_pairs)
+        train_pairs = list(map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), train_pairs))
         train_pairs = tf.constant(train_pairs)
         train_labels = tf.constant(train_labels)
         train_dataset = tf.contrib.data.Dataset.from_tensor_slices((train_pairs, train_labels))
@@ -165,7 +165,7 @@ def main(args):
         batched_train_dataset = train_dataset.batch(args.batch_size)
 
         # Validation dataset
-        val_pairs = map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), val_pairs)
+        val_pairs = list(map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), val_pairs))
         val_labels = tf.constant(val_labels)
         val_dataset = tf.contrib.data.Dataset.from_tensor_slices((val_pairs, val_labels))
         val_dataset = val_dataset.map(_parse_function,
