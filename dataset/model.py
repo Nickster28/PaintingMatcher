@@ -84,11 +84,12 @@ def main(args):
                 resized_images.append(resized_image)
 
                 # Produce color histogram
+                # https://stackoverflow.com/questions/34130902/create-color-histogram-of-an-image-using-tensorflow
                 with tf.variable_scope('color_hist_producer') as scope:
                     bin_size = 0.2
                     hist_entries = []
                     # Split image into single channels
-                    img_r, img_g, img_b = tf.split(centered_image, 3, 2)
+                    img_r, img_g, img_b = tf.split(resized_image, 3, 2)
                     for img_chan in [img_r, img_g, img_b]:
                         for idx, i in enumerate(np.arange(-1, 1, bin_size)):
                             gt = tf.greater(img_chan, i)
