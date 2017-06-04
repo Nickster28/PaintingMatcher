@@ -82,9 +82,8 @@ def main(args):
                 resized_image = tf.image.resize_images(image, [224, 224])  # (2)
                 resized_images.append(resized_image)
 
-            new_label = [0, 1] if label == 1 else [1, 0]
-
-            return tf.concat(resized_images, 2), new_label
+            return tf.concat(resized_images, 2), label
+            #return resized_images[0], label
 
         # ----------------------------------------------------------------------
         # DATASET CREATION using tf.contrib.data.Dataset
@@ -146,7 +145,6 @@ def main(args):
         b_pre = tf.get_variable("b_pre", shape=[3])
         pre_out = tf.nn.conv2d(images, W_pre, strides=[1,1,1,1], padding='SAME') + b_pre
         pre_out = tf.nn.relu(pre_out)
-        pre_init = tf.variables_initializer([W_pre, b_pre])
 
 
         # ---------------------------------------------------------------------
