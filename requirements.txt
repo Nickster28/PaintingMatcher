@@ -44,5 +44,5 @@ six==1.10.0
 terminado==0.5
 tornado==4.3
 traitlets==4.0.0
-tensorflow==1.0
+tensorflow==1.2.0rc0
 progressbar2==3.30.2
