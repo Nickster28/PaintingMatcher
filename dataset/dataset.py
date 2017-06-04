@@ -418,20 +418,23 @@ def loadDatasetRaw():
 	newDatasets = []
 	for dataset in [train, val, test]:
 		newDataset = []
+		newLabels = []
 		bar = progressbar.ProgressBar(max_value=len(dataset))
 		counter = 0
 		for entry in dataset:
 			try:
 				entry[0].fixGrayscale("images")
 				entry[1].fixGrayscale("images")
-				newDataset.append(entry)
+				newDataset.append(entry[:2])
+				newLabels.append(entry[2])
 			except Exception as e:
 				pass
 				
 			bar.update(counter)
 			counter += 1	
 
-		newDatasets.append(newDataset)	
+		newDatasets.append(newDataset)
+		newDatasets.append(newLabels)	
 	
 	return newDatasets
 
@@ -450,12 +453,29 @@ Returns: a (train, val, test) tuple where each entry is a list of
 '''
 def loadDatasetResize(width, height, imagesDirectory):
 	datasets = loadDatasetRaw()
+
+	if not os.path.exists(imagesDirectory):
+	    os.makedirs(imagesDirectory)
+	else:
+		return datasets
+
+	allPaintings = set()
+
+	# Compile a set of all paintings
 	for dataset in datasets:
 		for entry in dataset:
 			for painting in entry[:2]:
-				img = Image.open("images/" + painting.imageFilename())
-				img = img.resize((width, height))
-				img.save(imagesDirectory + "/" + painting.imageFilename())
+				allPaintings.add(painting)
+
+	# Resize and resave each painting's image
+	bar = progressbar.ProgressBar(max_value=len(allPaintings))
+	counter = 0
+	for painting in allPaintings:
+		img = Image.open("images/" + painting.imageFilename())
+		img = img.resize((width, height))
+		img.save(imagesDirectory + "/" + painting.imageFilename())
+		counter += 1
+		bar.update(counter)
 
 	return datasets
 
@@ -503,7 +523,13 @@ N x 1, where N = number of pairs.
 -----------------------------------------------
 '''
 def getDatasetResizeStack(width, height):
-	dirName = "images-resize-" + width + "x" + height
+	try:
+		output = pickle.load(open("datasetStack" + str(width) + "-" + str(height) + ".pickle", "rb"))
+		return output
+	except:
+		pass
+
+	dirName = "images-resize-" + str(width) + "x" + str(height)
 	datasets = loadDatasetResize(width, height, dirName)
 	newDatasets = []
 
@@ -511,14 +537,19 @@ def getDatasetResizeStack(width, height):
 		inputs = []
 		ys = []
 
-		for entry in dataset:
+		bar = progressbar.ProgressBar()
+		for i in bar(xrange(len(dataset))):
+			entry = dataset[i]
+
 			ys.append(entry[2])
 
 			image1 = misc.imread(dirName + "/" + entry[0].imageFilename())
 			image2 = misc.imread(dirName + "/" + entry[1].imageFilename())
 			inputs.append(np.concatenate((image1, image2), axis=2))
 
-		newDatasets.append(np.conatenate(inputs))
+		newDatasets.append(np.concatenate(inputs))
 		newDatasets.append(np.array(ys))
+
+	pickle.dump(newDatasets, open("datasetStack" + str(width) + "-" + str(height) + ".pickle", "wb"))
 
 	return newDatasets

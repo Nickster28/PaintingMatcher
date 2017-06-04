@@ -57,6 +57,8 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
 
+from dataset import dataset
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_dir', default='coco-animals/train')
@@ -72,30 +74,6 @@ parser.add_argument('--dropout_keep_prob', default=0.5, type=float)
 parser.add_argument('--weight_decay', default=5e-4, type=float)
 
 VGG_MEAN = [123.68, 116.78, 103.94]
-
-
-def list_images(directory):
-    """
-    Get all the images and labels in directory/label/*.jpg
-    """
-    labels = os.listdir(directory)
-    files_and_labels = []
-    for label in labels:
-        for f in os.listdir(os.path.join(directory, label)):
-            files_and_labels.append((os.path.join(directory, label, f), label))
-
-    filenames, labels = zip(*files_and_labels)
-    filenames = list(filenames)
-    labels = list(labels)
-    unique_labels = list(set(labels))
-
-    label_to_int = {}
-    for i, label in enumerate(unique_labels):
-        label_to_int[label] = i
-
-    labels = [label_to_int[l] for l in labels]
-
-    return filenames, labels
 
 
 def check_accuracy(sess, correct_prediction, is_training, dataset_init_op):
@@ -120,10 +98,9 @@ def check_accuracy(sess, correct_prediction, is_training, dataset_init_op):
 
 def main(args):
     # Get the list of filenames and corresponding list of labels for training et validation
-    train_filenames, train_labels = list_images(args.train_dir)
-    val_filenames, val_labels = list_images(args.val_dir)
-
-    num_classes = len(set(train_labels))
+    train_dataset, train_labels, val_dataset, val_labels, test_dataset, test_labels = dataset.loadDatasetRaw()
+    
+    num_classes = 2
 
     # --------------------------------------------------------------------------
     # In TensorFlow, you first want to define the computation graph with all the
@@ -138,50 +115,34 @@ def main(args):
         # Preprocessing (for both training and validation):
         # (1) Decode the image from jpg format
         # (2) Resize the image so its smaller side is 256 pixels long
-        def _parse_function(filename, label):
-            image_string = tf.read_file(filename)
-            image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
-            image = tf.cast(image_decoded, tf.float32)
+        def _parse_function(painting_list, label):
+            resized_images = []
+            for painting in painting_list:
+                image_string = tf.read_file(painting.imageURL)
+                image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
+                image = tf.cast(image_decoded, tf.float32)
 
-            smallest_side = 256.0
-            height, width = tf.shape(image)[0], tf.shape(image)[1]
-            height = tf.to_float(height)
-            width = tf.to_float(width)
+                smallest_side = 256.0
+                height, width = tf.shape(image)[0], tf.shape(image)[1]
+                height = tf.to_float(height)
+                width = tf.to_float(width)
 
-            scale = tf.cond(tf.greater(height, width),
-                            lambda: smallest_side / width,
-                            lambda: smallest_side / height)
-            new_height = tf.to_int32(height * scale)
-            new_width = tf.to_int32(width * scale)
+                scale = tf.cond(tf.greater(height, width),
+                                lambda: smallest_side / width,
+                                lambda: smallest_side / height)
+                new_height = tf.to_int32(height * scale)
+                new_width = tf.to_int32(width * scale)
 
-            resized_image = tf.image.resize_images(image, [new_height, new_width])  # (2)
-            return resized_image, label
+                resized_image = tf.image.resize_images(image, [new_height, new_width])  # (2)
 
-        # Preprocessing (for training)
-        # (3) Take a random 224x224 crop to the scaled image
-        # (4) Horizontally flip the image with probability 1/2
-        # (5) Substract the per color mean `VGG_MEAN`
-        # Note: we don't normalize the data here, as VGG was trained without normalization
-        def training_preprocess(image, label):
-            crop_image = tf.random_crop(image, [224, 224, 3])                       # (3)
-            flip_image = tf.image.random_flip_left_right(crop_image)                # (4)
+                means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
+                centered_image = resized_image - means
 
-            means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
-            centered_image = flip_image - means                                     # (5)
+                resized_images.append(centered_image)
 
-            return centered_image, label
+            new_label = [0, 1] if label == 1 else [1, 0]
 
-        # Preprocessing (for validation)
-        # (3) Take a central 224x224 crop to the scaled image
-        # (4) Substract the per color mean `VGG_MEAN`
-        # Note: we don't normalize the data here, as VGG was trained without normalization
-        def val_preprocess(image, label):
-            crop_image = tf.image.resize_image_with_crop_or_pad(image, 224, 224)    # (3)
-
-            means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
-            centered_image = crop_image - means                                     # (4)
-
-            return centered_image, label
+            return tf.concat(resized_images, 2), new_label
 
         # ----------------------------------------------------------------------
         # DATASET CREATION using tf.contrib.data.Dataset
@@ -195,23 +156,19 @@ def main(args):
         # threads and apply the preprocessing in parallel, and then batch the data
 
         # Training dataset
-        train_filenames = tf.constant(train_filenames)
+        train_pairs = tf.constant(train_pairs)
         train_labels = tf.constant(train_labels)
-        train_dataset = tf.contrib.data.Dataset.from_tensor_slices((train_filenames, train_labels))
+        train_dataset = tf.contrib.data.Dataset.from_tensor_slices((train_pairs, train_labels))
         train_dataset = train_dataset.map(_parse_function,
-            num_threads=args.num_workers, output_buffer_size=args.batch_size)
-        train_dataset = train_dataset.map(training_preprocess,
             num_threads=args.num_workers, output_buffer_size=args.batch_size)
         train_dataset = train_dataset.shuffle(buffer_size=10000)  # don't forget to shuffle
         batched_train_dataset = train_dataset.batch(args.batch_size)
 
         # Validation dataset
-        val_filenames = tf.constant(val_filenames)
+        val_pairs = tf.constant(val_pairs)
         val_labels = tf.constant(val_labels)
-        val_dataset = tf.contrib.data.Dataset.from_tensor_slices((val_filenames, val_labels))
+        val_dataset = tf.contrib.data.Dataset.from_tensor_slices((val_pairs, val_labels))
         val_dataset = val_dataset.map(_parse_function,
-            num_threads=args.num_workers, output_buffer_size=args.batch_size)
-        val_dataset = val_dataset.map(val_preprocess,
             num_threads=args.num_workers, output_buffer_size=args.batch_size)
         batched_val_dataset = val_dataset.batch(args.batch_size)
 
