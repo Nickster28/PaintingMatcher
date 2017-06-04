@@ -114,9 +114,9 @@ def main(args):
         # Preprocessing (for both training and validation):
         # (1) Decode the image from jpg format
         # (2) Resize the image so its smaller side is 256 pixels long
-        def _parse_function(paintings_string, label):
+        def _parse_function(paintingFilenames, label):
             resized_images = []
-            for paintingFilename in tf.string_split(paintings_string, delimiter=","):
+            for paintingFilename in paintingFilename[0]:
                 image_string = tf.read_file(paintingFilename)
                 image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
                 image = tf.cast(image_decoded, tf.float32)
@@ -155,7 +155,7 @@ def main(args):
         # threads and apply the preprocessing in parallel, and then batch the data
 
         # Training dataset
-        train_pairs = list(map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), train_pairs))
+        train_pairs = list(map(lambda pair: ["images/" + pair[0].imageFilename(), "images/" + pair[1].imageFilename()], train_pairs))
         train_pairs = tf.constant(train_pairs)
         train_labels = tf.constant(train_labels)
         train_dataset = tf.contrib.data.Dataset.from_tensor_slices((train_pairs, train_labels))
@@ -165,7 +165,8 @@ def main(args):
         batched_train_dataset = train_dataset.batch(args.batch_size)
 
         # Validation dataset
-        val_pairs = list(map(lambda pair: "images/" + pair[0].imageFilename() + ",images/" + pair[1].imageFilename(), val_pairs))
+        val_pairs = list(map(lambda pair: ["images/" + pair[0].imageFilename(), "images/" + pair[1].imageFilename()], val_pairs))
+        val_pairs = tf.constant(val_pairs)
         val_labels = tf.constant(val_labels)
         val_dataset = tf.contrib.data.Dataset.from_tensor_slices((val_pairs, val_labels))
         val_dataset = val_dataset.map(_parse_function,
