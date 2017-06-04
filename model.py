@@ -98,7 +98,7 @@ def check_accuracy(sess, correct_prediction, is_training, dataset_init_op):
 
 def main(args):
     # Get the list of filenames and corresponding list of labels for training et validation
-    train_dataset, train_labels, val_dataset, val_labels, test_dataset, test_labels = dataset.loadDatasetRaw()
+    train_pairs, train_labels, val_pairs, val_labels, test_pairs, test_labels = dataset.loadDatasetRaw()
     
     num_classes = 2
 
