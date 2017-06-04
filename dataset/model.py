@@ -83,7 +83,8 @@ def main(args):
                 resized_image = tf.image.resize_images(image, [224, 224])  # (2)
                 resized_images.append(resized_image)
 
-                # Produce color histogram
+                '''
+                # TODO: Produce color histogram
                 # https://stackoverflow.com/questions/34130902/create-color-histogram-of-an-image-using-tensorflow
                 with tf.variable_scope('color_hist_producer') as scope:
                     bin_size = 0.2
@@ -100,6 +101,7 @@ def main(args):
                     # Pack scalars together to a tensor, then normalize histogram.
                     hist = tf.nn.l2_normalize(tf.stack(hist_entries), 0)
                     histograms.append(hist)
+                '''
 
             return tf.concat(resized_images, 2), label
 
