@@ -74,6 +74,7 @@ def main(args):
         # (2) Resize the image
         def _parse_function(filename1, filename2, label):
             resized_images = []
+            histograms = []
             for paintingFilename in [filename1, filename2]:
                 image_string = tf.read_file(paintingFilename)
                 image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
@@ -82,8 +83,24 @@ def main(args):
                 resized_image = tf.image.resize_images(image, [224, 224])  # (2)
                 resized_images.append(resized_image)
 
+                # Produce color histogram
+                with tf.variable_scope('color_hist_producer') as scope:
+                    bin_size = 0.2
+                    hist_entries = []
+                    # Split image into single channels
+                    img_r, img_g, img_b = tf.split(centered_image, 3, 2)
+                    for img_chan in [img_r, img_g, img_b]:
+                        for idx, i in enumerate(np.arange(-1, 1, bin_size)):
+                            gt = tf.greater(img_chan, i)
+                            leq = tf.less_equal(img_chan, i + bin_size)
+                            # Put together with logical_and, cast to float and sum up entries -> gives count for current bin.
+                            hist_entries.append(tf.reduce_sum(tf.cast(tf.logical_and(gt, leq), tf.float32)))
+
+                    # Pack scalars together to a tensor, then normalize histogram.
+                    hist = tf.nn.l2_normalize(tf.pack(hist_entries), 0)
+                    histograms.append(hist)
+
             return tf.concat(resized_images, 2), label
-            #return resized_images[0], label
 
         # ----------------------------------------------------------------------
         # DATASET CREATION using tf.contrib.data.Dataset
