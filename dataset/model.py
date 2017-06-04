@@ -57,7 +57,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
 
-from dataset.dataset import *
+from dataset import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_dir', default='coco-animals/train')
