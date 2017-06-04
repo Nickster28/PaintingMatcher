@@ -98,7 +98,7 @@ def main(args):
                             hist_entries.append(tf.reduce_sum(tf.cast(tf.logical_and(gt, leq), tf.float32)))
 
                     # Pack scalars together to a tensor, then normalize histogram.
-                    hist = tf.nn.l2_normalize(tf.pack(hist_entries), 0)
+                    hist = tf.nn.l2_normalize(tf.stack(hist_entries), 0)
                     histograms.append(hist)
 
             return tf.concat(resized_images, 2), label
