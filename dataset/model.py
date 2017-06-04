@@ -71,7 +71,7 @@ def main(args):
 
         # Preprocessing (for both training and validation):
         # (1) Decode the image from jpg format
-        # (2) Resize the image so its smaller side is 256 pixels long
+        # (2) Resize the image
         def _parse_function(filename1, filename2, label):
             resized_images = []
             for paintingFilename in [filename1, filename2]:
@@ -79,19 +79,7 @@ def main(args):
                 image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
                 image = tf.cast(image_decoded, tf.float32)
 
-                smallest_side = 256.0
-                height, width = tf.shape(image)[0], tf.shape(image)[1]
-                height = tf.to_float(height)
-                width = tf.to_float(width)
-
-                scale = tf.cond(tf.greater(height, width),
-                                lambda: smallest_side / width,
-                                lambda: smallest_side / height)
-                new_height = tf.to_int32(height * scale)
-                new_width = tf.to_int32(width * scale)
-
-                resized_image = tf.image.resize_images(image, [new_height, new_width])  # (2)
-
+                resized_image = tf.image.resize_images(image, [224, 224])  # (2)
                 resized_images.append(resized_image)
 
             new_label = [0, 1] if label == 1 else [1, 0]
@@ -154,11 +142,10 @@ def main(args):
         is_training = tf.placeholder(tf.bool)
 
         # Added: an additional layer taking our input tensors and reshaping them
-        images_reshaped = tf.reshape(images, [-1, 301056])
-        W_pre = tf.Variable(tf.zeros([301056, 150328]), name="W_pre")
-        b_pre = tf.Variable(tf.zeros([150328]), name="b_pre")
-        pre_out = tf.matmul(images_reshaped, W_pre) + b_pre
-        pre_out = tf.reshape(pre_out, [-1, 224, 224, 3])
+        W_pre = tf.get_variable("W_pre", shape=[7,7,6,3])
+        b_pre = tf.get_variable("b_pre", shape=[3])
+        pre_out = tf.nn.conv2d(images, W_pre, strides=[1,1,1,1], padding='SAME') + b_pre
+        pre_out = tf.nn.relu(pre_out)
         pre_init = tf.variables_initializer([W_pre, b_pre])
 
 
