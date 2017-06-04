@@ -13,41 +13,6 @@ wget http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz
 tar -xvf vgg_16_2016_08_28.tar.gz
 rm vgg_16_2016_08_28.tar.gz
 ```
-For this example we will use a tiny dataset of images from the COCO dataset.
-We have chosen eight types of animals (bear, bird, cat, dog, giraffe, horse,
-sheep, and zebra); for each of these categories we have selected 100 training
-images and 25 validation images from the COCO dataset. You can download and
-unpack the data (176 MB) by running:
-```
-wget cs231n.stanford.edu/coco-animals.zip
-unzip coco-animals.zip
-rm coco-animals.zip
-```
-The training data is stored on disk; each category has its own folder on disk
-and the images for that category are stored as .jpg files in the category folder.
-In other words, the directory structure looks something like this:
-coco-animals/
-  train/
-    bear/
-      COCO_train2014_000000005785.jpg
-      COCO_train2014_000000015870.jpg
-      [...]
-    bird/
-    cat/
-    dog/
-    giraffe/
-    horse/
-    sheep/
-    zebra/
-  val/
-    bear/
-    bird/
-    cat/
-    dog/
-    giraffe/
-    horse/
-    sheep/
-    zebra/
 """
 
 import argparse
@@ -60,19 +25,12 @@ import tensorflow.contrib.slim.nets
 from dataset import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--train_dir', default='coco-animals/train')
-parser.add_argument('--val_dir', default='coco-animals/val')
-parser.add_argument('--model_path', default='vgg_16.ckpt', type=str)
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--num_workers', default=4, type=int)
-parser.add_argument('--num_epochs1', default=10, type=int)
-parser.add_argument('--num_epochs2', default=10, type=int)
-parser.add_argument('--learning_rate1', default=1e-3, type=float)
-parser.add_argument('--learning_rate2', default=1e-5, type=float)
+parser.add_argument('--num_epochs', default=10, type=int)
+parser.add_argument('--learning_rate', default=1e-5, type=float)
 parser.add_argument('--dropout_keep_prob', default=0.5, type=float)
 parser.add_argument('--weight_decay', default=5e-4, type=float)
-
-VGG_MEAN = [123.68, 116.78, 103.94]
 
 
 def check_accuracy(sess, correct_prediction, is_training, dataset_init_op):
@@ -113,7 +71,7 @@ def main(args):
 
         # Preprocessing (for both training and validation):
         # (1) Decode the image from jpg format
-        # (2) Resize the image so its smaller side is 256 pixels long
+        # (2) Resize the image
         def _parse_function(filename1, filename2, label):
             resized_images = []
             for paintingFilename in [filename1, filename2]:
@@ -121,23 +79,8 @@ def main(args):
                 image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
                 image = tf.cast(image_decoded, tf.float32)
 
-                smallest_side = 256.0
-                height, width = tf.shape(image)[0], tf.shape(image)[1]
-                height = tf.to_float(height)
-                width = tf.to_float(width)
-
-                scale = tf.cond(tf.greater(height, width),
-                                lambda: smallest_side / width,
-                                lambda: smallest_side / height)
-                new_height = tf.to_int32(height * scale)
-                new_width = tf.to_int32(width * scale)
-
-                resized_image = tf.image.resize_images(image, [new_height, new_width])  # (2)
-
-                means = tf.reshape(tf.constant(VGG_MEAN), [1, 1, 3])
-                centered_image = resized_image - means
-
-                resized_images.append(centered_image)
+                resized_image = tf.image.resize_images(image, [224, 224])  # (2)
+                resized_images.append(resized_image)
 
                 # Produce color histogram
                 with tf.variable_scope('color_hist_producer') as scope:
@@ -157,8 +100,7 @@ def main(args):
 
             new_label = [0, 1] if label == 1 else [1, 0]
 
-            #return tf.concat(resized_images, 2), new_label
-            return resized_images[0], new_label
+            return tf.concat(resized_images, 2), new_label
 
         # ----------------------------------------------------------------------
         # DATASET CREATION using tf.contrib.data.Dataset
@@ -215,13 +157,20 @@ def main(args):
         # Indicates whether we are in training or in test mode
         is_training = tf.placeholder(tf.bool)
 
+        # Added: an additional layer taking our input tensors and reshaping them
+        W_pre = tf.get_variable("W_pre", shape=[7,7,6,3])
+        b_pre = tf.get_variable("b_pre", shape=[3])
+        pre_out = tf.nn.conv2d(images, W_pre, strides=[1,1,1,1], padding='SAME') + b_pre
+        pre_out = tf.nn.relu(pre_out)
+        pre_init = tf.variables_initializer([W_pre, b_pre])
+
+
         # ---------------------------------------------------------------------
         # Now that we have set up the data, it's time to set up the model.
         # For this example, we'll use VGG-16 pretrained on ImageNet. We will remove the
         # last fully connected layer (fc8) and replace it with our own, with an
         # output size num_classes=8
-        # We will first train the last layer for a few epochs.
-        # Then we will train the entire model on our dataset for a few epochs.
+        # We will train the entire model on our dataset for a few epochs.
 
         # Get the pretrained model, specifying the num_classes argument to create a new
         # fully connected replacing the last one, called "vgg_16/fc8"
@@ -230,22 +179,8 @@ def main(args):
         # We pass a scope to initialize "vgg_16/fc8" weights with he_initializer
         vgg = tf.contrib.slim.nets.vgg
         with slim.arg_scope(vgg.vgg_arg_scope(weight_decay=args.weight_decay)):
-            logits, _ = vgg.vgg_16(images, num_classes=num_classes, is_training=is_training,
+            logits, _ = vgg.vgg_16(pre_out, num_classes=num_classes, is_training=is_training,
                                    dropout_keep_prob=args.dropout_keep_prob)
-
-        # Specify where the model checkpoint is (pretrained weights).
-        model_path = args.model_path
-        assert(os.path.isfile(model_path))
-
-        # Restore only the layers up to fc7 (included)
-        # Calling function `init_fn(sess)` will load all the pretrained weights.
-        variables_to_restore = tf.contrib.framework.get_variables_to_restore(exclude=['vgg_16/fc8'])
-        init_fn = tf.contrib.framework.assign_from_checkpoint_fn(model_path, variables_to_restore)
-
-        # Initialization operation from scratch for the new "fc8" layers
-        # `get_variables` will only return the variables whose name starts with the given pattern
-        fc8_variables = tf.contrib.framework.get_variables('vgg_16/fc8')
-        fc8_init = tf.variables_initializer(fc8_variables)
 
         # ---------------------------------------------------------------------
         # Using tf.losses, any loss is added to the tf.GraphKeys.LOSSES collection
@@ -253,14 +188,9 @@ def main(args):
         tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
         loss = tf.losses.get_total_loss()
 
-        # First we want to train only the reinitialized last layer fc8 for a few epochs.
-        # We run minimize the loss only with respect to the fc8 variables (weight and bias).
-        fc8_optimizer = tf.train.GradientDescentOptimizer(args.learning_rate1)
-        fc8_train_op = fc8_optimizer.minimize(loss, var_list=fc8_variables)
-
         # Then we want to finetune the entire model for a few epochs.
         # We run minimize the loss only with respect to all the variables.
-        full_optimizer = tf.train.GradientDescentOptimizer(args.learning_rate2)
+        full_optimizer = tf.train.GradientDescentOptimizer(args.learning_rate)
         full_train_op = full_optimizer.minimize(loss)
 
         # Evaluation metrics
@@ -268,39 +198,16 @@ def main(args):
         correct_prediction = tf.equal(prediction, labels)
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-        tf.get_default_graph().finalize()
-
     # --------------------------------------------------------------------------
     # Now that we have built the graph and finalized it, we define the session.
     # The session is the interface to *run* the computational graph.
     # We can call our training operations with `sess.run(train_op)` for instance
     with tf.Session(graph=graph) as sess:
-        init_fn(sess)  # load the pretrained weights
-        sess.run(fc8_init)  # initialize the new fc8 layer
-
-        # Update only the last layer for a few epochs.
-        for epoch in range(args.num_epochs1):
-            # Run an epoch over the training data.
-            print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs1))
-            # Here we initialize the iterator with the training set.
-            # This means that we can go through an entire epoch until the iterator becomes empty.
-            sess.run(train_init_op)
-            while True:
-                try:
-                    _ = sess.run(fc8_train_op, {is_training: True})
-                except tf.errors.OutOfRangeError:
-                    break
-
-            # Check accuracy on the train and val sets every epoch.
-            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op)
-            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op)
-            print('Train accuracy: %f' % train_acc)
-            print('Val accuracy: %f\n' % val_acc)
-
+        sess.run(tf.global_variables_initializer())
 
         # Train the entire model for a few more epochs, continuing with the *same* weights.
-        for epoch in range(args.num_epochs2):
-            print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs1))
+        for epoch in range(args.num_epochs):
+            print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs))
             sess.run(train_init_op)
             while True:
                 try:
