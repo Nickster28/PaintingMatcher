@@ -57,7 +57,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
 
-from dataset.dataset import *
+from dataset import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_dir', default='coco-animals/train')
@@ -97,7 +97,7 @@ def check_accuracy(sess, correct_prediction, is_training, dataset_init_op):
 
 def main(args):
     # Get the list of filenames and corresponding list of labels for training et validation
-    train_pairs, train_labels, val_pairs, val_labels, test_pairs, test_labels = dataset.loadDatasetRaw()
+    train_dataset, train_labels, val_dataset, val_labels, test_dataset, test_labels = loadDatasetRaw()
     
     num_classes = 2
 

@@ -410,9 +410,9 @@ Returns: a (train, val, test) tuple where each entry is a list of
 '''
 def loadDatasetRaw():
 	# Load the dataset from the pickle files
-	train = pickle.load(open("train.pickle", "rb"))
-	val = pickle.load(open("val.pickle", "rb"))
-	test = pickle.load(open("test.pickle", "rb"))
+	train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
+	val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
+	test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
 
 	# Convert any grayscale images to 3-channel images
 	newDatasets = []
