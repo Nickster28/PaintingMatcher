@@ -196,10 +196,6 @@ class PaintingThemeModel:
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 
-            # Tensorboard logging
-            train_writer = tf.summary.FileWriter(args.log_dir + '/train', graph)
-            merged_summary = tf.summary.merge_all()
-
         """
         ------------------------------------------------------------------------
         Now that we have built the graph, we define the session.
@@ -209,14 +205,20 @@ class PaintingThemeModel:
         """
         with tf.Session(graph=graph) as sess:
 
+            # Tensorboard logging
+            train_writer = tf.summary.FileWriter(args.log_dir + '/train', graph)
+            merged_summary = tf.summary.merge_all()
+
             sess.run(tf.global_variables_initializer())
             for epoch in range(args.num_epochs):
                 print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs))
                 sess.run(train_init_op)
+                batch_num = 0
                 while True:
                     try:
                         summary, _ = sess.run([merged_summary, train_op], {is_training: True})
-                        train_writer.add_summary(summary)
+                        train_writer.add_summary(summary, epoch * args.dataset_size / args.batch_size + i)
+                        i += 1
                     except tf.errors.OutOfRangeError:
                         break
 
