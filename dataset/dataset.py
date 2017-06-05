@@ -408,7 +408,7 @@ Returns: a (train, val, test) tuple where each entry is a list of
 	If the pickle files for train/val/test do not exist, returns an empty tuple.
 ------------------------
 '''
-def loadDatasetRaw():
+def loadDatasetRaw(numPairs):
 	# Load the dataset from the pickle files
 	train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
 	val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
@@ -433,8 +433,8 @@ def loadDatasetRaw():
 			bar.update(counter)
 			counter += 1	
 
-		newDatasets.append(newDataset)
-		newDatasets.append(newLabels)	
+		newDatasets.append(newDataset[:numPairs])
+		newDatasets.append(newLabels[:numPairs])	
 	
 	return newDatasets
 
