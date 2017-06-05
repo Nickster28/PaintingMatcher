@@ -1,8 +1,9 @@
 from model import PaintingThemeModel, Painting
 from dataset import loadDatasetRaw
 import tensorflow as tf
+import numpy as np
 
-class SimpleStackModel(PaintingThemeModel):
+class HistogramStackModel(PaintingThemeModel):
 
 	def getDataset(self):
 		(
@@ -12,7 +13,7 @@ class SimpleStackModel(PaintingThemeModel):
 		    val_labels, 
 		    test_pairs, 
 		    test_labels
-		) = loadDatasetRaw()
+		) = loadDatasetRaw(200)
 
 		train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
 		train_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), train_pairs))
@@ -63,7 +64,6 @@ class SimpleStackModel(PaintingThemeModel):
 		        histograms.append(hist)
 
 		hist_diff = histograms[0] - histograms[1]
-		print(tf.shape(hist_diff))
 
 		return tf.concat(resized_images, 2), hist_diff, label
 
@@ -72,12 +72,11 @@ class SimpleStackModel(PaintingThemeModel):
 		histogramTensor = inputs[1]
 
 		# Added: an additional layer taking our input tensors and reshaping them
-		W_pre = tf.get_variable("W_pre", shape=[7,7,6,3])
-		b_pre = tf.get_variable("b_pre", shape=[3])
-		pre_out = tf.nn.conv2d(inputs[0], W_pre, strides=[1,1,1,1], padding='SAME') + b_pre
-		return tf.nn.relu(pre_out)
+		conv_out = tf.layers.conv2d(inputs[0], 3, (7, 7), padding='same', activation=tf.nn.relu)
+		W_hist = tf.get_variable("W_hist", shape=[X, 224*224*3])
+		b_hist = tf.get_variable("b_hist", shape=[224*224*3])
+		dense_out = tf.matmul(histogramTensor, W_hist) + b_hist
+		return conv_out + dense_out
 
-		batchx224x224x3 + 
-
-model = SimpleStackModel()
+model = HistogramStackModel()
 model.train()
