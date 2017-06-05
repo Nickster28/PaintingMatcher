@@ -7,12 +7,12 @@ class HistogramStackModel(PaintingThemeModel):
 
 	def getDataset(self):
 		(
-			train_pairs,
-			train_labels, 
-			val_pairs, 
-			val_labels, 
-			test_pairs, 
-			test_labels
+		    train_pairs,
+		    train_labels, 
+		    val_pairs, 
+		    val_labels, 
+		    test_pairs, 
+		    test_labels
 		) = loadDatasetRaw(self.dataset_size)
 
 		train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
@@ -25,9 +25,15 @@ class HistogramStackModel(PaintingThemeModel):
 		val_pairs_1 = tf.constant(val_pairs_1)
 		val_pairs_2 = tf.constant(val_pairs_2)
 
+		test_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), test_pairs))
+		test_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), test_pairs))
+		test_pairs_1 = tf.constant(test_pairs_1)
+		test_pairs_2 = tf.constant(test_pairs_2)
+
 		return {
 			"train": (train_pairs_1, train_pairs_2, tf.constant(train_labels)),
-			"val": (val_pairs_1, val_pairs_2, tf.constant(val_labels))
+			"val": (val_pairs_1, val_pairs_2, tf.constant(val_labels)),
+			"test": (test_pairs_1, test_pairs_2, tf.constant(test_labels))
 		}
 
 	def processInputData(self, *args):
