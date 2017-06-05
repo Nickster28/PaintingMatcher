@@ -213,7 +213,7 @@ class PaintingThemeModel:
             for epoch in range(args.num_epochs):
                 print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs))
                 sess.run(train_init_op)
-                batch_num = 0
+                i = 0
                 while True:
                     try:
                         summary, _ = sess.run([merged_summary, train_op], {is_training: True})
