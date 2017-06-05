@@ -60,9 +60,21 @@ class TitlesStackModel(PaintingThemeModel):
         val_pairs_1_titles = tf.constant(val_pairs_1_titles, dtype=tf.float32)
         val_pairs_2_titles = tf.constant(val_pairs_2_titles, dtype=tf.float32)
 
+        test_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), test_pairs))
+        test_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), test_pairs))
+        test_pairs_1_tmp = list(map(lambda pair: pair[0].imageFilename(), test_pairs))
+        test_pairs_2_tmp = list(map(lambda pair: pair[1].imageFilename(), test_pairs))
+        test_pairs_1_titles = self.get_lexicon_indices([titles_file[title] for title in test_pairs_1_tmp])
+        test_pairs_2_titles = self.get_lexicon_indices([titles_file[title] for title in test_pairs_2_tmp])
+        test_pairs_1 = tf.constant(test_pairs_1)
+        test_pairs_2 = tf.constant(test_pairs_2)
+        test_pairs_1_titles = tf.constant(test_pairs_1_titles, dtype=tf.float32)
+        test_pairs_2_titles = tf.constant(test_pairs_2_titles, dtype=tf.float32)
+
         return {
             "train": (train_pairs_1, train_pairs_2, train_pairs_1_titles, train_pairs_2_titles, tf.constant(train_labels)),
-            "val": (val_pairs_1, val_pairs_2, val_pairs_1_titles, val_pairs_2_titles, tf.constant(val_labels))
+            "val": (val_pairs_1, val_pairs_2, val_pairs_1_titles, val_pairs_2_titles, tf.constant(val_labels)),
+            "test": (test_pairs_1, test_pairs_2, test_pairs_1_titles, test_pairs_2_titles, tf.constant(test_labels))
         }
 
     def processInputData(self, *args):
