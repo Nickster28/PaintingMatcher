@@ -10,16 +10,19 @@ embedding = np.load('titles_trimmed_glove_vectors.npy')
 class TitlesStackModel(PaintingThemeModel):
 
     def get_lexicon_indices(self, title_list):
-        new_title_list = []
-        for img_title in title_list:
-            lower_title = []
-            for i in range(0, 5):
-                try:
-                    lower_title.append(embedding[lexicon[img_title[i].lower()]])
-                except:
-                    lower_title.append(embedding[lexicon['<UNK>']])
-            new_title_list.append(lower_title)
-        return new_title_list
+        output = np.zeros((self.dataset_size, 5, 300))
+        for i, img_title in enumerate(title_list):
+
+            # Add at most 5 words from img_title
+            for j in range(0, min(len(img_title), 5)):
+                vectorIndex = lexicon.get(img_title[j].lower(), lexicon['<UNK>'])
+                output[i,j,:] = embedding[vectorIndex]
+
+            # Add padding up to 5 words
+            for j in range(0, max(5 - len(img_title), 0)):
+                output[i,j,:] = embedding[lexicon['<UNK>']]
+
+        return output
             
     def getDataset(self):
         (
@@ -29,7 +32,7 @@ class TitlesStackModel(PaintingThemeModel):
             val_labels, 
             test_pairs, 
             test_labels
-        ) = loadDatasetRaw(200)
+        ) = loadDatasetRaw(self.dataset_size)
         
         titles_file = np.load('image_titles.npy').item()
         
@@ -42,8 +45,8 @@ class TitlesStackModel(PaintingThemeModel):
         train_pairs_2_titles = self.get_lexicon_indices([titles_file[title] for title in train_pairs_2_tmp])
         train_pairs_1 = tf.constant(train_pairs_1)
         train_pairs_2 = tf.constant(train_pairs_2)
-        train_pairs_1_titles = tf.constant(train_pairs_1_titles)
-        train_pairs_2_titles = tf.constant(train_pairs_2_titles)
+        train_pairs_1_titles = tf.constant(train_pairs_1_titles, dtype=tf.float32)
+        train_pairs_2_titles = tf.constant(train_pairs_2_titles, dtype=tf.float32)
         
 
         val_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), val_pairs))
@@ -54,8 +57,8 @@ class TitlesStackModel(PaintingThemeModel):
         val_pairs_2_titles = self.get_lexicon_indices([titles_file[title] for title in val_pairs_2_tmp])
         val_pairs_1 = tf.constant(val_pairs_1)
         val_pairs_2 = tf.constant(val_pairs_2)
-        val_pairs_1_titles = tf.constant(val_pairs_1_titles)
-        val_pairs_2_titles = tf.constant(val_pairs_2_titles)
+        val_pairs_1_titles = tf.constant(val_pairs_1_titles, dtype=tf.float32)
+        val_pairs_2_titles = tf.constant(val_pairs_2_titles, dtype=tf.float32)
 
         return {
             "train": (train_pairs_1, train_pairs_2, train_pairs_1_titles, train_pairs_2_titles, tf.constant(train_labels)),
@@ -65,8 +68,6 @@ class TitlesStackModel(PaintingThemeModel):
     def processInputData(self, *args):
         filename1 = args[0]
         filename2 = args[1]
-        title1 = args[2]
-        title2 = args[3]
         label = args[4]
 
         resized_images = []
@@ -79,15 +80,8 @@ class TitlesStackModel(PaintingThemeModel):
             resized_image = tf.image.resize_images(image, [224, 224])  # (2)
             resized_images.append(resized_image)
 
-        
-        for title in [title1, title2]:
-            title_embeddings.append(title)
-           
-        #    W = tf.get_variable(name='W', shape=embedding.shape, initializer=tf.constant_initializer(tf.constant(embedding, dtype='float32')), trainable=False)
-        #    title_embed = tf.nn.lookup(W, title)
-        #    title_embeddings.append(title_embed)
 
-        return tf.concat(values=resized_images, axis=2), label #tf.stack(values=title_embeddings, axis=0), label
+        return tf.concat(values=resized_images, axis=2), tf.stack(values=args[2:4]), label
 
     def vggInput(self, inputs):
         imageTensor = inputs[0]
@@ -95,10 +89,10 @@ class TitlesStackModel(PaintingThemeModel):
 
         # Added: an additional layer taking our input tensors and reshaping them
         conv_out = tf.layers.conv2d(inputs[0], 3, (7, 7), padding='same', activation=tf.nn.relu)
-        #W_hist = tf.get_variable("W_hist", shape=[X, 224*224*3])
-        #b_hist = tf.get_variable("b_hist", shape=[224*224*3])
-        #dense_out = tf.matmul(histogramTensor, W_hist) + b_hist
-        return conv_out #+ dense_out
+        titlesTensor = tf.reshape(titlesTensor, [-1, 3000])
+        title_out = tf.layers.dense(titlesTensor, 224, activation=tf.nn.relu)
+        title_out = tf.reshape(title_out, [-1, 224, 1, 1])
+        return conv_out + title_out
 
 model = TitlesStackModel()
 model.train()
