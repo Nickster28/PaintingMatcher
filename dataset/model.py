@@ -195,10 +195,9 @@ class PaintingThemeModel:
             correct_prediction = tf.equal(prediction, labels)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-
-        # Tensorboard logging
-        train_writer = tf.summary.FileWriter(args.log_dir + '/train', graph)
-        merged_summary = tf.summary.merge_all()
+            # Tensorboard logging
+            train_writer = tf.summary.FileWriter(args.log_dir + '/train', graph)
+            merged_summary = tf.summary.merge_all()
 
         """
         ------------------------------------------------------------------------
