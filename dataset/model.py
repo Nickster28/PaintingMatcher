@@ -199,7 +199,8 @@ class PaintingThemeModel:
                 sess.run(train_init_op)
                 while True:
                     try:
-                        _ = sess.run(train_op, {is_training: True})
+                        loss_val, _ = sess.run([loss, train_op], {is_training: True})
+                        print("Loss: " + str(loss_val))
                     except tf.errors.OutOfRangeError:
                         break
 
