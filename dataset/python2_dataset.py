@@ -27,6 +27,8 @@ import itertools
 from PIL import Image
 from scipy import misc
 import numpy as np
+from tqdm import tqdm
+
 
 # Classification labels for themes
 SAME_THEME = 1
@@ -410,16 +412,15 @@ Returns: a (train, val, test) tuple where each entry is a list of
 '''
 def loadDatasetRaw():
 	# Load the dataset from the pickle files
-	train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
-	val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
-	test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
+	train = pickle.load(open("train.pickle", "rb")) #, encoding='latin1')
+	val = pickle.load(open("val.pickle", "rb")) #, encoding='latin1')
+	test = pickle.load(open("test.pickle", "rb")) #, encoding='latin1')
 
 	# Convert any grayscale images to 3-channel images
 	newDatasets = []
-	for dataset in [train, val, test]:
+	for dataset in tqdm([train, val, test]):
 		newDataset = []
 		newLabels = []
-		bar = progressbar.ProgressBar(max_value=len(dataset))
 		counter = 0
 		for entry in dataset:
 			try:
@@ -430,7 +431,6 @@ def loadDatasetRaw():
 			except Exception as e:
 				pass
 				
-			bar.update(counter)
 			counter += 1	
 
 		newDatasets.append(newDataset)
