@@ -26,6 +26,7 @@ class PaintingThemeModel:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('--batch_size', default=32, type=int)
+        self.parser.add_argument('--dataset_size', default=64, type=int)
         self.parser.add_argument('--num_workers', default=4, type=int)
         self.parser.add_argument('--num_epochs', default=10, type=int)
         self.parser.add_argument('--learning_rate', default=1e-5, type=float)
@@ -71,6 +72,7 @@ class PaintingThemeModel:
 
     def train(self):
         args = self.parser.parse_args()
+        self.dataset_size = args.dataset_size
         
         """
         ------------------------------------------------------------------------

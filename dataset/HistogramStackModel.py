@@ -13,7 +13,7 @@ class HistogramStackModel(PaintingThemeModel):
 		    val_labels, 
 		    test_pairs, 
 		    test_labels
-		) = loadDatasetRaw(200)
+		) = loadDatasetRaw(self.dataset_size)
 
 		train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
 		train_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), train_pairs))
@@ -63,9 +63,7 @@ class HistogramStackModel(PaintingThemeModel):
 		        hist = tf.nn.l2_normalize(tf.stack(hist_entries), 0)
 		        histograms.append(hist)
 
-		hist_diff = histograms[0] - histograms[1]
-
-		return tf.concat(resized_images, 2), hist_diff, label
+		return tf.concat(resized_images, 2), tf.concat(histograms, 0), label
 
 	def vggInput(self, inputs):
 		imageTensor = inputs[0]

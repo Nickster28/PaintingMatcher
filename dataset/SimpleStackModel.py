@@ -12,7 +12,7 @@ class SimpleStackModel(PaintingThemeModel):
 		    val_labels, 
 		    test_pairs, 
 		    test_labels
-		) = loadDatasetRaw(20)
+		) = loadDatasetRaw(self.dataset_size)
 
 		train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
 		train_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), train_pairs))
