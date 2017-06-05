@@ -433,8 +433,15 @@ def loadDatasetRaw(numPairs):
 			bar.update(counter)
 			counter += 1	
 
-		newDatasets.append(newDataset[:numPairs])
-		newDatasets.append(newLabels[:numPairs])	
+		newDatasets.append(newDataset)
+		newDatasets.append(newLabels)	
+
+	newDatasets[0] = newDatasets[0][:numPairs]
+	newDatasets[1] = newDatasets[1][:numPairs]
+	newDatasets[2] = newDatasets[2][:numPairs / 4]
+	newDatasets[3] = newDatasets[3][:numPairs / 4]
+	newDatasets[4] = newDatasets[4][:numPairs / 4]
+	newDatasets[5] = newDatasets[5][:numPairs / 4]
 	
 	return newDatasets
 

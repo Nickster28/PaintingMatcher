@@ -32,6 +32,7 @@ class PaintingThemeModel:
         self.parser.add_argument('--learning_rate', default=1e-5, type=float)
         self.parser.add_argument('--dropout_keep_prob', default=0.5, type=float)
         self.parser.add_argument('--weight_decay', default=5e-4, type=float)
+        self.parser.add_argument('--log_dir', default='log', type=str)
 
     # Should return the ultimate input row given a row from each inputted
     # column from our dataset.
@@ -119,6 +120,12 @@ class PaintingThemeModel:
                 num_threads=args.num_workers, output_buffer_size=args.batch_size)
             batched_val_dataset = val_dataset.batch(args.batch_size)
 
+            # Test dataset
+            test_dataset = tf.contrib.data.Dataset.from_tensor_slices(dataset["test"])
+            test_dataset = test_dataset.map(self.processInputData,
+                num_threads=args.num_workers, output_buffer_size=args.batch_size)
+            batched_test_dataset = test_dataset.batch(args.batch_size)
+
             """
             --------------------------------------------------------------------
             Now we define an iterator that can operator on either dataset.
@@ -143,6 +150,7 @@ class PaintingThemeModel:
 
             train_init_op = iterator.make_initializer(batched_train_dataset)
             val_init_op = iterator.make_initializer(batched_val_dataset)
+            test_init_op = iterator.make_initializer(batched_test_dataset)
 
             # Indicates whether we are in training or in test mode
             is_training = tf.placeholder(tf.bool)
@@ -177,6 +185,7 @@ class PaintingThemeModel:
             """
             tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
             loss = tf.losses.get_total_loss()
+            tf.summary.scalar('loss', loss)
 
             optimizer = tf.train.GradientDescentOptimizer(args.learning_rate)
             train_op = optimizer.minimize(loss)
@@ -185,6 +194,11 @@ class PaintingThemeModel:
             prediction = tf.to_int32(tf.argmax(logits, 1))
             correct_prediction = tf.equal(prediction, labels)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+
+        # Tensorboard logging
+        train_writer = tf.summary.FileWriter(args.log_dir + '/train', graph)
+        merged_summary = tf.summary.merge_all()
 
         """
         ------------------------------------------------------------------------
@@ -196,14 +210,15 @@ class PaintingThemeModel:
         with tf.Session(graph=graph) as sess:
 
             sess.run(tf.global_variables_initializer())
-
+            i = 0
             for epoch in range(args.num_epochs):
                 print('Starting epoch %d / %d' % (epoch + 1, args.num_epochs))
                 sess.run(train_init_op)
                 while True:
                     try:
-                        loss_val, _ = sess.run([loss, train_op], {is_training: True})
-                        print("Loss: " + str(loss_val))
+                        summary, _ = sess.run([merged_summary, train_op], {is_training: True})
+                        train_writer.add_summary(summary, i)
+                        i += 1
                     except tf.errors.OutOfRangeError:
                         break
 
@@ -212,4 +227,10 @@ class PaintingThemeModel:
                 val_acc = self.check_accuracy(sess, correct_prediction, is_training, val_init_op)
                 print('Train accuracy: %f' % train_acc)
                 print('Val accuracy: %f\n' % val_acc)
+
+            # Check accuracy on the test set at the end
+            test_acc = self.check_accuracy(sess, correct_prediction, is_training, test_init_op)
+            print('Test accuracy: %f' % test_acc)
+
+            train_writer.close()
 
