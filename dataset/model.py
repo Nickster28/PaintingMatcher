@@ -73,6 +73,7 @@ class PaintingThemeModel:
     def train(self):
         args = self.parser.parse_args()
         self.dataset_size = args.dataset_size
+        self.batch_size = args.dataset_size
         
         """
         ------------------------------------------------------------------------
