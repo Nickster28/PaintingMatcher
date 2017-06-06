@@ -35,6 +35,7 @@ class TitlesStackModel(PaintingThemeModel):
         ) = loadDatasetRaw(self.dataset_size)
         
         titles_file = np.load('image_titles.npy').item()
+        print(titles_file['158.jpg'])
         
 
         train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
