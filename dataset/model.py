@@ -13,15 +13,19 @@ https://www.tensorflow.org/versions/r1.2/install/
 """
 
 import argparse
+import shutil
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import tensorflow.contrib.slim.nets
+import matplotlib.pyplot as plt
+import numpy as np
 
 from dataset import *
 
 class PaintingThemeModel:
     NUM_CLASSES = 2
+    NUM_THEMES = 10
 
     def __init__(self):
         self.parser = argparse.ArgumentParser()
@@ -49,12 +53,20 @@ class PaintingThemeModel:
         raise NotImplementedError
 
     def check_accuracy(self, sess, correct_prediction, is_training,
-        dataset_init_op):
+        dataset_init_op, confusion_matrix_data=None):
         """
         Check the accuracy of the model on either train or val
         (depending on dataset_init_op).
         """
+
+        if confusion_matrix_data != None:
+            themesList = list(set(confusion_matrix_data[0]).union(set(confusion_matrix_data[1])))
+            themesMap = {}
+            for i, theme in enumerate(themesList):
+                themesMap[theme] = i
+
         # Initialize the correct dataset
+        full_results = []
         sess.run(dataset_init_op)
         num_correct, num_samples = 0, 0
         while True:
@@ -62,10 +74,36 @@ class PaintingThemeModel:
                 correct_pred = sess.run(correct_prediction, {
                     is_training: False
                 })
+
                 num_correct += correct_pred.sum()
                 num_samples += correct_pred.shape[0]
+                full_results += correct_pred.tolist()
             except tf.errors.OutOfRangeError:
                 break
+
+
+        if confusion_matrix_data:
+            matrix = np.zeros((PaintingThemeModel.NUM_THEMES, PaintingThemeModel.NUM_THEMES))
+
+            for i in np.arange(len(confusion_matrix_data[0])):
+                theme1 = confusion_matrix_data[0][i]
+                theme1Index = themesMap[theme1]
+                theme2 = confusion_matrix_data[1][i]
+                theme2Index = themesMap[theme2]
+
+                # Correct
+                if full_results[i]:
+                    matrix[theme1Index][theme2Index] += 1
+                    matrix[theme2Index][theme1Index] += 1
+
+            plt.matshow(matrix)
+            plt.xticks(themesList)
+            plt.yticks(themesList)
+            plt.colorbar()
+            print(themesList)
+            plt.savefig('confusion.jpg')
+            #plt.show()
+
 
         # Return the fraction of datapoints that were correctly classified
         acc = float(num_correct) / num_samples
@@ -74,7 +112,6 @@ class PaintingThemeModel:
     def train(self):
         args = self.parser.parse_args()
         self.dataset_size = args.dataset_size
-        self.batch_size = args.dataset_size
         
         """
         ------------------------------------------------------------------------
@@ -229,7 +266,8 @@ class PaintingThemeModel:
                 print('Val accuracy: %f\n' % val_acc)
 
             # Check accuracy on the test set at the end
-            test_acc = self.check_accuracy(sess, correct_prediction, is_training, test_init_op)
+            test_acc = self.check_accuracy(sess, correct_prediction, is_training, test_init_op,
+                confusion_matrix_data=dataset["test_themes"])
             print('Test accuracy: %f' % test_acc)
 
             train_writer.close()
