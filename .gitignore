@@ -3,3 +3,4 @@
 .env/*
 dataset/images*
 dataset/coco-animals/*
+dataset/log

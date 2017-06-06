@@ -29,10 +29,14 @@ class SimpleStackModel(PaintingThemeModel):
 		test_pairs_1 = tf.constant(test_pairs_1)
 		test_pairs_2 = tf.constant(test_pairs_2)
 
+		test_themes_1 = list(map(lambda pair: pair[0].theme, test_pairs))
+		test_themes_2 = list(map(lambda pair: pair[1].theme, test_pairs))
+
 		return {
 			"train": (train_pairs_1, train_pairs_2, tf.constant(train_labels)),
 			"val": (val_pairs_1, val_pairs_2, tf.constant(val_labels)),
-			"test": (test_pairs_1, test_pairs_2, tf.constant(test_labels))
+			"test": (test_pairs_1, test_pairs_2, tf.constant(test_labels)),
+			"test_themes": (test_themes_1, test_themes_2)
 		}
 
 	def processInputData(self, *args):
