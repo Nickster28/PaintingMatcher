@@ -32,6 +32,7 @@ import numpy as np
 
 PORTRAIT = 1
 NON_PORTRAIT = 0
+PORTRAIT_THEMES = ['female-portraits', 'male-portraits']
 
 
     #######################################################################
@@ -264,9 +265,8 @@ def generateDataset():
 	themesDict = {theme: themesDict[theme] for theme in themesDict if len(themesDict[theme]) > MIN_PAINTINGS}
 	
 	# Gather all 7681 portrait paintings
-	portraitThemes = ['female-portraits', 'male-portraits']
 	portraits = []
-	for portraitTheme in portraitThemes:
+	for portraitTheme in PORTRAIT_THEMES:
 		portraits += themesDict[portraitTheme]
 		del themesDict[portraitTheme]
 
@@ -304,9 +304,12 @@ def generateDataset():
 MAIN FUNCTION: createTrainValTestDatasets():
 ---------------------------------------
 Parameters: NA
-Returns: NA
+Returns: (train, val, test) tuple of lists where each list contains tuples of
+the format (PAINTING, SCORE).
 
-
+Labels the downloaded dataset and splits it into 2/5 train, 2/5 val, and 1/5
+test datasets.  Each dataset is a list of tuples where the first entry is a
+painting and the second entry is the score (PORTRAIT or NON_PORTRAIT).
 ---------------------------------------
 '''
 def createTrainValTestDatasets():
@@ -317,42 +320,16 @@ def createTrainValTestDatasets():
 		dataset = generateDataset()
 		pickle.dump(dataset, open("downloadedDataset.pickle", "wb"))
 
-	labeledDataset = []
-
-	# Label each pair
-	bar = progressbar.ProgressBar()
-	print("Labeling pairs")
-	for i in bar(xrange(len(dataset))):
-		pair = dataset[i]
-		painting1 = pair.pop()
-
-		# Since elements are sets, if a painting is paired with itself the
-		# set will be length 1.
-		if len(pair) > 0:
-			painting2 = pair.pop()
-		else:
-			painting2 = painting1
-
-		labeledEntry = [painting1, painting2]
-		random.shuffle(labeledEntry)
-		if painting1.theme == painting2.theme:
-			labeledEntry.append(SAME_THEME)
-		else:
-			labeledEntry.append(DIFFERENT_THEME)
-
-		labeledDataset.append(labeledEntry)
-
+	labeledDataset = [(p, PORTRAIT if p.theme in PORTRAIT_THEMES else NON_PORTRAIT) for p in dataset]
+		
 	# Split the pairs into train, val and test
-	numPerSubset = len(dataset) / 3
+	numPerSubset = int(len(dataset) / 5)
 
-	trainPairs = labeledDataset[: numPerSubset]
-	pickle.dump(trainPairs, open("train.pickle", "wb"))
+	train = labeledDataset[: 3 * numPerSubset]
+	val = labeledDataset[3 * numPerSubset : 4 * numPerSubset]
+	test = labeledDataset[4 * numPerSubset :]
 
-	valPairs = labeledDataset[numPerSubset : 2*numPerSubset]
-	pickle.dump(valPairs, open("val.pickle", "wb"))
-
-	testPairs = labeledDataset[2*numPerSubset :]
-	pickle.dump(testPairs, open("test.pickle", "wb"))
+	return (train, val, test)
 
 
     #######################################################################
@@ -370,10 +347,16 @@ Returns: a (train, val, test) tuple where each entry is a list of
 ------------------------
 '''
 def loadDatasetRaw(numPairs):
-	# Load the dataset from the pickle files
-	train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
-	val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
-	test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
+	# Load the datasets from the pickle file or recreate as a backup
+	try:
+		train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
+		val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
+		test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
+	except:
+		(train, val, test) = createTrainValTestDatasets()
+		pickle.dump(train, open("train.pickle", "wb"))
+		val = pickle.dump(val, open("val.pickle", "wb"))
+		test = pickle.dump(test, open("test.pickle", "wb"))
 
 	# TODO
 
