@@ -14,6 +14,7 @@ https://www.tensorflow.org/versions/r1.2/install/
 
 import argparse
 import shutil
+import pickle
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -32,7 +33,7 @@ class PaintingThemeModel:
         self.parser.add_argument('--dataset_size', default=-1, type=int)
         self.parser.add_argument('--num_workers', default=4, type=int)
         self.parser.add_argument('--num_epochs', default=10, type=int)
-        self.parser.add_argument('--learning_rate', default=0.1, type=float)
+        self.parser.add_argument('--learning_rate', default=0.01, type=float)
         self.parser.add_argument('--dropout_keep_prob', default=0.5, type=float)
         self.parser.add_argument('--weight_decay', default=5e-4, type=float)
         self.parser.add_argument('--log_dir', default='log', type=str)
@@ -61,6 +62,7 @@ class PaintingThemeModel:
         # Initialize the correct dataset
         sess.run(dataset_init_op)
         num_correct, num_samples = 0, 0
+        full_correct = []
         while True:
             try:
                 correct_pred = sess.run(correct_prediction, {
@@ -69,13 +71,14 @@ class PaintingThemeModel:
 
                 num_correct += correct_pred.sum()
                 num_samples += correct_pred.shape[0]
+                full_correct.append(correct_pred)
             except tf.errors.OutOfRangeError:
                 break
 
 
         # Return the fraction of datapoints that were correctly classified
         acc = float(num_correct) / num_samples
-        return acc
+        return (acc, np.concatenate(full_correct))
 
     def train(self):
         args = self.parser.parse_args()
@@ -227,14 +230,15 @@ class PaintingThemeModel:
                         break
 
                 # Check accuracy on the train and val sets every epoch
-                train_acc = self.check_accuracy(sess, correct_prediction, is_training, train_init_op)
-                val_acc = self.check_accuracy(sess, correct_prediction, is_training, val_init_op)
+                train_acc, _ = self.check_accuracy(sess, correct_prediction, is_training, train_init_op)
+                val_acc, _ = self.check_accuracy(sess, correct_prediction, is_training, val_init_op)
                 print('Train accuracy: %f' % train_acc)
                 print('Val accuracy: %f\n' % val_acc)
 
             # Check accuracy on the test set at the end
-            test_acc = self.check_accuracy(sess, correct_prediction, is_training, test_init_op)
+            test_acc, answers = self.check_accuracy(sess, correct_prediction, is_training, test_init_op)
             print('Test accuracy: %f' % test_acc)
+            np.save("test_correct", answers)
 
             train_writer.close()
 
