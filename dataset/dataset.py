@@ -350,13 +350,15 @@ def createTrainValTestDatasets():
 '''
 FUNCTION: loadDatasetRaw
 ------------------------
-Parameters: NA
+Parameters:
+	size - optionally specify the size of the three datasets
+
 Returns: a (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
 list where each entry is either a list of Painting objects (input) or a list of
 scores (label).
 ------------------------
 '''
-def loadDatasetRaw():
+def loadDatasetRaw(size=-1):
 	# Load the datasets from the pickle file or recreate as a backup
 	try:
 		train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
@@ -375,5 +377,11 @@ def loadDatasetRaw():
 	testInput = [entry[0] for entry in test]
 	testLabels = [entry[1] for entry in test]
 
-	return (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
+	output = (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
+
+	# Cap dataset size if needed
+	if size > 0:
+		output = [o[:size] for o in output]
+
+	return output
 

@@ -4,63 +4,48 @@ import tensorflow as tf
 
 class SimpleStackModel(PaintingThemeModel):
 
-	def getDataset(self):
+	def getDataset(self, size=-1):
 		(
-		    train_pairs,
-		    train_labels, 
-		    val_pairs, 
-		    val_labels, 
-		    test_pairs, 
-		    test_labels
-		) = loadDatasetRaw(self.dataset_size)
+		    trainInput,
+		    trainLabels, 
+		    valInput, 
+		    valLabels, 
+		    testInput, 
+		    testLabels
+		) = loadDatasetRaw(size=size)
 
-		train_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), train_pairs))
-		train_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), train_pairs))
-		train_pairs_1 = tf.constant(train_pairs_1)
-		train_pairs_2 = tf.constant(train_pairs_2)
+		trainFilenames = list(map(lambda p: "images/" + p.imageFilename(), trainInput))
+		trainFilenames = tf.constant(trainFilenames)
 
-		val_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), val_pairs))
-		val_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), val_pairs))
-		val_pairs_1 = tf.constant(val_pairs_1)
-		val_pairs_2 = tf.constant(val_pairs_2)
+		valFilenames = list(map(lambda p: "images/" + p.imageFilename(), valInput))
+		valFilenames = tf.constant(valFilenames)
 
-		test_pairs_1 = list(map(lambda pair: "images/" + pair[0].imageFilename(), test_pairs))
-		test_pairs_2 = list(map(lambda pair: "images/" + pair[1].imageFilename(), test_pairs))
-		test_pairs_1 = tf.constant(test_pairs_1)
-		test_pairs_2 = tf.constant(test_pairs_2)
+		testFilenames = list(map(lambda p: "images/" + p.imageFilename(), testInput))
+		testFilenames = tf.constant(testFilenames)
 
-		test_themes_1 = list(map(lambda pair: pair[0].theme, test_pairs))
-		test_themes_2 = list(map(lambda pair: pair[1].theme, test_pairs))
+		testThemes = list(map(lambda p: p.theme, testInput))
 
 		return {
-			"train": (train_pairs_1, train_pairs_2, tf.constant(train_labels)),
-			"val": (val_pairs_1, val_pairs_2, tf.constant(val_labels)),
-			"test": (test_pairs_1, test_pairs_2, tf.constant(test_labels)),
-			"test_themes": (test_themes_1, test_themes_2)
+			"train": (tf.constant(trainFilenames), tf.constant(trainLabels)),
+			"val": (tf.constant(valFilenames), tf.constant(valLabels)),
+			"test": (tf.constant(testFilenames), tf.constant(testLabels)),
+			"test_themes": testThemes
 		}
 
 	def processInputData(self, *args):
-		filename1 = args[0]
-		filename2 = args[1]
-		label = args[2]
+		filename = args[0]
+		label = args[1]
 
-		resized_images = []
-		for paintingFilename in [filename1, filename2]:
-		    image_string = tf.read_file(paintingFilename)
-		    image_decoded = tf.image.decode_jpeg(image_string, channels=3)          # (1)
-		    image = tf.cast(image_decoded, tf.float32)
+		image_string = tf.read_file(filename)
+		image_decoded = tf.image.decode_jpeg(image_string, channels=3)  # (1)
+		image = tf.cast(image_decoded, tf.float32)
 
-		    resized_image = tf.image.resize_images(image, [224, 224])  # (2)
-		    resized_images.append(resized_image)
+		resized_image = tf.image.resize_images(image, [224, 224])  # (2)		    
 
-		return tf.concat(resized_images, 2), label
+		return resized_image, label
 
 	def vggInput(self, inputs):
-		# Added: an additional layer taking our input tensors and reshaping them
-		W_pre = tf.get_variable("W_pre", shape=[7,7,6,3])
-		b_pre = tf.get_variable("b_pre", shape=[3])
-		pre_out = tf.nn.conv2d(inputs[0], W_pre, strides=[1,1,1,1], padding='SAME') + b_pre
-		return tf.nn.relu(pre_out)
+		return inputs[0]
 
 model = SimpleStackModel()
 model.train()
