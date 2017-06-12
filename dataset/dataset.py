@@ -22,7 +22,7 @@ put into train, 1/5 into val, and 1/5 into test.
 import csv
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool 
-from urllib import urlretrieve
+from urllib.request import urlretrieve
 from collections import defaultdict
 import pickle
 import random
@@ -320,7 +320,7 @@ images to 3-channel RGB images.
 def createTrainValTestDatasets():
 	# Load the dataset from the pickle file or recreate as a backup
 	try:
-		dataset = pickle.load(open("downloadedDataset.pickle", "rb"))
+		dataset = pickle.load(open("downloadedDataset.pickle", "rb"), encoding='latin1')
 	except IOError as e:
 		dataset = generateDataset()
 		pickle.dump(dataset, open("downloadedDataset.pickle", "wb"))
