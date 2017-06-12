@@ -97,12 +97,9 @@ class PaintingThemeModel:
                     matrix[theme2Index][theme1Index] += 1
 
             plt.matshow(matrix)
-            plt.xticks(themesList)
-            plt.yticks(themesList)
             plt.colorbar()
-            print(themesList)
             plt.savefig('confusion.jpg')
-            #plt.show()
+            plt.show()
 
 
         # Return the fraction of datapoints that were correctly classified
