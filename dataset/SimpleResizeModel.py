@@ -1,5 +1,4 @@
-from model import PaintingThemeModel, Painting
-from dataset import loadDatasetRaw
+from model import PaintingThemeModel
 import tensorflow as tf
 
 class SimpleResizeModel(PaintingThemeModel):

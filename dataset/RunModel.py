@@ -2,6 +2,7 @@ import argparse
 from SimpleResizeModel import SimpleResizeModel
 from HistogramResizeModel import HistogramResizeModel
 from GramResizeModel import GramResizeModel
+from GramHistoResizeModel import GramHistoResizeModel
 from dataset import *
 
 parser = argparse.ArgumentParser()
@@ -29,6 +30,11 @@ elif args.model == 'HistogramResizeModel':
 	model.train()
 elif args.model == 'GramResizeModel':
 	model = GramResizeModel(args.batch_size, args.dataset_size,
+		args.num_workers, args.num_epochs, args.learning_rate,
+		args.dropout_keep_prob, args.weight_decay, args.log_dir)
+	model.train()
+elif args.model == 'GramHistoResizeModel':
+	model = GramHistoResizeModel(args.batch_size, args.dataset_size,
 		args.num_workers, args.num_epochs, args.learning_rate,
 		args.dropout_keep_prob, args.weight_decay, args.log_dir)
 	model.train()

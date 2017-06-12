@@ -1,41 +1,30 @@
-from model import PaintingThemeModel, Painting
-from dataset import loadDatasetRaw
 from SimpleResizeModel import SimpleResizeModel
 import tensorflow as tf
-import numpy as np
+from utils import gram_matrix
 
 class GramResizeModel(SimpleResizeModel):
 
-	def gram_matrix(self, features, normalize=True):
-		"""
-		Compute the Gram matrix from features.
-		
-		Inputs:
-		- features: Tensor of shape (1, H, W, C) giving features for
-		  a single image.
-		- normalize: optional, whether to normalize the Gram matrix
-			If True, divide the Gram matrix by the number of neurons (H * W * C)
-		
-		Returns:
-		- gram: Tensor of shape (C, C) giving the (optionally normalized)
-		  Gram matrices for the input image.
-		"""
-		shape = tf.shape(features)
-		features = tf.transpose(features, perm=[0, 3, 1, 2])
-		features = tf.reshape(features, [shape[0], shape[3], -1])
-		gram = tf.matmul(features, tf.transpose(features, perm=[0, 2, 1]))
-		if normalize:
-			gram /= tf.to_float(shape[1] * shape[2] * shape[3])
-		return gram
+	'''
+	METHOD: gramLayer
+	-----------------
+	Parameters:
+		image - the input image (N x 224 x 224 x 3)
 
-	def vggInput(self, inputs):
-		imageTensor = inputs[0]
-
-		conv_out = tf.layers.conv2d(imageTensor, 32, (7, 7), padding='same', activation=tf.nn.relu)
-		gramTensor = self.gram_matrix(conv_out)
+	Returns: the output gram tensor for that image.  It is created by passing
+	the image through a conv layer with 32 7x7 filters and then calculating the
+	gram matrix of that output which is reshaped to N x 224 x 1 x 1.
+	-----------------
+	'''
+	def gramLayer(self, image):
+		conv_out = tf.layers.conv2d(image, 32, (7, 7), padding='same', activation=tf.nn.relu)
+		gramTensor = gram_matrix(conv_out)
 
 		# Added: an additional layer taking our input tensors and reshaping them
 		gram_out = tf.reshape(gramTensor, [-1, 1024])
 		gram_out = tf.layers.dense(gram_out, 224, activation=tf.nn.relu)
-		gram_out = tf.reshape(gram_out, [-1, 224, 1, 1])
-		return imageTensor + gram_out
+		return tf.reshape(gram_out, [-1, 224, 1, 1])
+
+	def vggInput(self, inputs):
+		imageTensor = inputs[0]
+		gramTensor = self.gramLayer(imageTensor)
+		return imageTensor + gramTensor
