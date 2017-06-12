@@ -17,7 +17,9 @@ each pickle file.
 
 
 import csv
-import urllib
+from urllib.request import urlretrieve
+from multiprocessing.dummy import Pool # use threads for I/O bound tasks
+from urllib.request import urlretrieve
 from collections import defaultdict
 import pickle
 import random
@@ -28,9 +30,8 @@ from PIL import Image
 from scipy import misc
 import numpy as np
 
-# Classification labels for themes
-SAME_THEME = 1
-DIFFERENT_THEME = 0
+PORTRAIT = 1
+NON_PORTRAIT = 0
 
 
     #######################################################################
@@ -96,33 +97,58 @@ class Painting:
 	Parameters:
 		directory - the directory in which to save this image
 
-	Returns: NA
+	Returns: True on success, False on failure
 
 	Attempts to download the image for this painting into the given directory if
 	it has not been downloaded to this location already (in which case we do
 	nothing).  The image will be saved as ID.jpg, where ID is the ID of this
-	painting.  If the download fails, an exception is thrown.
+	painting.  If the download fails, the image is deleted.
 	---------------------
 	'''
 	def downloadImageTo(self, directory):
 		fullFilename = directory + "/" + self.imageFilename()
-		if not os.path.isfile(fullFilename):
-			urllib.urlretrieve(self.imageURL, fullFilename)
+		if os.path.isfile(fullFilename):
+			return True
+
+		try:
+			urlretrieve(self.imageURL, fullFilename)
+		except UnicodeEncodeError as e:
+			return False
+
+		try:
+			image = misc.imread(fullFilename)
+			return True
+		except FileNotFoundError as e:
+			os.remove(fullFilename)
+			return False
 
 	'''
-	METHOD: deleteImageFile
-	-----------------------
+	METHOD: deleteImage
+	-------------------
 	Parameters:
-		directory - the directory in which to delete this painting's image.
+		directory - the directory in which to save this image
+
 	Returns: NA
 
-	If the file exists, deletes our image file on disk in the given directory.
+	Removes the image file for this painting from the given directory.
+	-------------------
+	'''
+	def deleteImage(self, directory):
+		fullFilename = directory + "/" + self.imageFilename()
+		os.remove(fullFilename)
+
+	'''
+	METHOD: imageDownloaded
+	-----------------------
+	Parameters:
+		directory - the directory in which to check for this painting's image.
+
+	Returns: whether or not this painting was successfully downloaded to the
+	given directory.
 	-----------------------
 	'''
-	def deleteImageFile(self, directory):
-		fullFilename = directory + "/" + self.imageFilename()
-		if os.path.isfile(fullFilename):
-			os.remove(fullFilename)
+	def imageDownloaded(self, directory):
+		return os.path.isfile(directory + "/" + self.imageFilename())
 
 	'''
 	METHOD: fixGrayscale
@@ -182,7 +208,7 @@ that theme name.
 ---------------
 '''
 def parse(datasetFile):
-	with open(datasetFile, 'rb') as csvfile:
+	with open(datasetFile, 'rt', encoding='ISO-8859-1') as csvfile:
 		reader = csv.reader(csvfile, delimiter=',')
 		rows = [row for row in reader if row[6].startswith("http")][1:]
 		paintings = [Painting(row) for row in rows]
@@ -195,135 +221,74 @@ def parse(datasetFile):
 		return paintingsThemeDict
 
 '''
-FUNCTION: trimThemesDict
-------------------------
+FUNCTION: downloadPaintings
+---------------------------
 Parameters:
-	themesDict - a map from theme name to list of Paintings for that theme
-	themesToUse - a list of theme names to actually use.
+	paintings - the list of painting objects to download images for
 
-Returns: an updated themesDict containing only themes in themesToUse.
-Additionally, each of those theme's painting lists have been trimmed to the
-minimum number of paintings among all themesToUse themes.
-------------------------
+Returns: a subset of paintings that have had their images downloaded to the
+images/ directory.  Images are downloaded in parallel.
+---------------------------
 '''
-def trimThemesDict(themesDict, themesToUse):
-	newThemesDict = {}
+def downloadPaintings(paintings, batchSize=20):
 
-	# Trim all theme counts down to the min theme count
-	minThemeCount = min([len(themesDict[k]) for k in themesToUse])
-	allThemes = themesDict.keys()
-	for k in themesToUse:
-		newThemesDict[k] = themesDict[k][:minThemeCount]
+	def downloadPainting(painting):
+		return painting.downloadImageTo("images")
 
-	return newThemesDict
+	bar = progressbar.ProgressBar()
+	for i in bar(range(int(len(paintings) / batchSize))):
+		batch = paintings[i * batchSize : (i+1) * batchSize]
+		Pool(batchSize).map(downloadPainting, batch)
 
-'''
-FUNCTION: addPairFrom
----------------------
-Parameters:
-	theme1, theme2: the names of the themes to use to select paintings for
-					the pair (PAINTING1, PAINTING2).  PAINTING1 will be
-					theme1, and PAINTING2 will be theme2.
-	themesDict - a dictionary of theme -> list of Paintings of that theme
-	datasetPairs - a list of set(painting, painting) containing all existing
-				pairs that have been created.
-Returns: NA
+	# Download any remainder paintings
+	if (len(paintings) % batchSize > 0):
+		batch = paintings[int(len(paintings) / batchSize) * batchSize :]
+		Pool(len(paintings) % batchSize).map(downloadPainting, batch)
 
-Picks a random pair of paintings from theme1 and theme2 that have not been
-chosen before in datasetPairs, and adds it (as a set) to datasetPairs.
-If a pair is chosen, its contained paintings will download their images.
----------------------
-'''
-def addPairFrom(theme1, theme2, themesDict, datasetPairs):
-	theme1Paintings = themesDict[theme1]
-	theme2Paintings = themesDict[theme2]
-	while True:
-		painting1 = theme1Paintings[random.randint(0, 
-			len(theme1Paintings) - 1)]
-		painting2 = theme2Paintings[random.randint(0, 
-			len(theme2Paintings) - 1)]
-		pair = set([painting1, painting2])
-
-		if pair not in datasetPairs:
-
-			# Try downloading the paintings' images from the web
-			didFinishDownloadingPainting1 = False
-			try:
-				painting1.downloadImageTo("images")
-				didFinishDownloadingPainting1 = True
-				painting2.downloadImageTo("images")
-				datasetPairs.append(pair)
-				break
-			except Exception as e:
-				print("Exception: " + str(e))
-				# Remove the erroring painting from our pairs list
-				if didFinishDownloadingPainting1:
-					painting1.deleteImageFile("images")
-					themesDict[theme2].remove(painting2)
-				else:
-					themesDict[theme1].remove(painting1)
+	return [p for p in paintings if p.imageDownloaded("images")]
 
 '''
-FUNCTION: generatePairsDataset
+FUNCTION: generateDataset
 ------------------------------
-Parameters:
-	numPairs - the number of dataset pairs to generate.  Must be divisible by
-				2*len(themesToUse) and 2*(len(themesToUse) choose 2).
-				
-	themesToUse - (OPTIONAL) a list of theme names to generate pairs from.  If
-					not specified, pairs are generated from all themes.
+Parameters: NA
 
-Returns: a list of sets of 2 paintings
-
-Randomly chooses unique pairs of paintings such that 50% of chosen pairs are
-SAME pairs (pairs of paintings with the same theme), and 50% are DIFFERENT
-pairs (pairs of paintings with different themes).  Within the 50% of SAME pairs,
-pairs are evenly-weighted between each theme.  Within the 50% of DIFFERENT
-pairs, pairs are evenly-weighted among all possible combinations of themes.
+Returns: a randomized list of portrait and non-portrait paintings, 50% of which
+are portraits (male + female) and 50% of which are non-portraits, chosen
+equally from all other themes with >= 100 samples.
 ------------------------------
 '''
-def generatePairsDataset(numPairs, themesToUse=None):
 
-	# Load the dataset from the pickle file or from dataset.csv as a backup
-	try:
-		themesDict = pickle.load(open("dataset.pickle", "rb"))
-	except:
-		themesDict = parse('dataset.csv')
-		pickle.dump(themesDict, open("dataset.pickle", "wb"))
+def generateDataset():
+	themesDict = parse('dataset.csv')
 
+	# Remove all themes with few paintings
+	MIN_PAINTINGS = 300
+	themesDict = {theme: themesDict[theme] for theme in themesDict if len(themesDict[theme]) > MIN_PAINTINGS}
+	
+	# Gather all 7681 portrait paintings
+	portraitThemes = ['female-portraits', 'male-portraits']
+	portraits = []
+	for portraitTheme in portraitThemes:
+		portraits += themesDict[portraitTheme]
+		del themesDict[portraitTheme]
 
-	# If no themes specified, use all of them
-	if not themesToUse:
-		themesToUse = themesDict.keys()
+	portraits = downloadPaintings(portraits)
+	print(str(len(portraits)) + " portraits downloaded")
 
-	themeCombos = [c for c in itertools.combinations(themesToUse, 2)]
-	assert(numPairs % (2 * len(themeCombos)) == 0)
-	assert(numPairs % (2 * len(themesToUse)) == 0)
+	minPaintingCount = min([len(themesDict[theme]) for theme in themesDict])
 
-	# Trim down to only themesToUse, where each theme has equal # of paintings
-	themesDict = trimThemesDict(themesDict, themesToUse)
-
-	# List of sets of 2 paintings
-	datasetPairs = []
-
-	# First pick numPairs / 2 SAME theme pairs, equally from each theme
-	numSamePairsPerTheme = numPairs / (2 * len(themesDict.keys()))
+	# Trim all remaining themes to the same size and gather them together
+	other = []
 	for theme in themesDict:
-		bar = progressbar.ProgressBar()
-		print("Choosing SAME pairs from " + theme)
-		for i in bar(xrange(numSamePairsPerTheme)):
-			addPairFrom(theme, theme, themesDict, datasetPairs)
+		paintings = themesDict[theme]
+		random.shuffle(paintings)
+		other += paintings[:minPaintingCount]
+	random.shuffle(other)
 
-	# Now pick numPairs / 2 DIFFERENT theme pairs, equally from each pairing
-	numDiffPairsPerCombo = numPairs / (2 * len(themeCombos))
-	for themeCombo in themeCombos:
-		bar = progressbar.ProgressBar()
-		print("Choosing DIFFERENT pairs from " + str(themeCombo))
-		for i in bar(xrange(numDiffPairsPerCombo)):
-			addPairFrom(themeCombo[0], themeCombo[1], themesDict, datasetPairs)
-
-	random.shuffle(datasetPairs)
-	return datasetPairs
+	other = downloadPaintings(other)
+	print(str(len(other)) + " other downloaded")
+		
+generateDataset()
 
 '''
 MAIN FUNCTION: createTrainValTestDatasets():
@@ -340,20 +305,9 @@ list containing [PAINTING1, PAINTING2, LABEL].
 def createTrainValTestDatasets():
 	# Load the dataset from the pickle file or recreate as a backup
 	try:
-		dataset = pickle.load(open("trainvaltestdataset.pickle", "rb"))
+		dataset = pickle.load(open("pruneddataset.pickle", "rb"))
 	except:
-		dataset = generatePairsDataset(360000, themesToUse = [
-			"female-portraits",
-			"male-portraits",
-			"forests-and-trees",
-			"houses-and-buildings",
-			"mountains",
-			"boats-and-ships",
-			"animals",
-			"roads-and-vehicles",
-			"fruits-and-vegetables",
-			"flowers-and-plants"
-		])
+		dataset = generateDataset()
 		pickle.dump(dataset, open("trainvaltestdataset.pickle", "wb"))
 
 	labeledDataset = []
@@ -404,9 +358,8 @@ FUNCTION: loadDatasetRaw
 ------------------------
 Parameters: NA
 Returns: a (train, val, test) tuple where each entry is a list of
-	[painting, painting, score].  The painting images have not been modified
+	(painting, score) tuples.  The painting images have not been modified
 	other than converting 1-channel grayscale images to 3-channel RGB images.
-	If the pickle files for train/val/test do not exist, returns an empty tuple.
 ------------------------
 '''
 def loadDatasetRaw(numPairs):
@@ -415,34 +368,5 @@ def loadDatasetRaw(numPairs):
 	val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
 	test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
 
-	# Convert any grayscale images to 3-channel images
-	newDatasets = []
-	for dataset in [train, val, test]:
-		newDataset = []
-		newLabels = []
-		bar = progressbar.ProgressBar(max_value=len(dataset))
-		counter = 0
-		for entry in dataset:
-			try:
-				entry[0].fixGrayscale("images")
-				entry[1].fixGrayscale("images")
-				newDataset.append(entry[:2])
-				newLabels.append(entry[2])
-			except Exception as e:
-				pass
-				
-			bar.update(counter)
-			counter += 1	
-
-		newDatasets.append(newDataset)
-		newDatasets.append(newLabels)	
-
-	newDatasets[0] = newDatasets[0][:numPairs]
-	newDatasets[1] = newDatasets[1][:numPairs]
-	newDatasets[2] = newDatasets[2][:int(numPairs / 4)]
-	newDatasets[3] = newDatasets[3][:int(numPairs / 4)]
-	newDatasets[4] = newDatasets[4][:int(numPairs / 4)]
-	newDatasets[5] = newDatasets[5][:int(numPairs / 4)]
-	
-	return newDatasets
+	# TODO
 
