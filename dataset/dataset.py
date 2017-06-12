@@ -348,8 +348,8 @@ def createTrainValTestDatasets():
 FUNCTION: loadDatasetRaw
 ------------------------
 Parameters: NA
-Returns: a (train, val, test) tuple where each entry is a list of
-	(painting, score) tuples.  
+Returns: a (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
+list where each entry is a list of (painting, score) tuples.  
 ------------------------
 '''
 def loadDatasetRaw():
@@ -372,6 +372,4 @@ def loadDatasetRaw():
 	testLabels = [entry[1] for entry in test]
 
 	return (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
-
-loadDatasetRaw()
 
