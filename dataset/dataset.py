@@ -17,9 +17,9 @@ each pickle file.
 
 
 import csv
-from urllib.request import urlretrieve
-from multiprocessing.dummy import Pool # use threads for I/O bound tasks
-from urllib.request import urlretrieve
+from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool 
+from urllib import urlretrieve
 from collections import defaultdict
 import pickle
 import random
@@ -112,13 +112,15 @@ class Painting:
 
 		try:
 			urlretrieve(self.imageURL, fullFilename)
-		except UnicodeEncodeError as e:
+		except Exception as e:
+			if os.path.isfile(fullFilename):
+				os.remove(fullFilename)
 			return False
 
 		try:
 			image = misc.imread(fullFilename)
 			return True
-		except FileNotFoundError as e:
+		except IOError as e:
 			os.remove(fullFilename)
 			return False
 
@@ -208,7 +210,7 @@ that theme name.
 ---------------
 '''
 def parse(datasetFile):
-	with open(datasetFile, 'rt', encoding='ISO-8859-1') as csvfile:
+	with open(datasetFile, 'rb') as csvfile:
 		reader = csv.reader(csvfile, delimiter=',')
 		rows = [row for row in reader if row[6].startswith("http")][1:]
 		paintings = [Painting(row) for row in rows]
@@ -230,20 +232,15 @@ Returns: a subset of paintings that have had their images downloaded to the
 images/ directory.  Images are downloaded in parallel.
 ---------------------------
 '''
-def downloadPaintings(paintings, batchSize=20):
+def downloadPaintings(paintings, batchSize=50):
 
 	def downloadPainting(painting):
-		return painting.downloadImageTo("images")
+		painting.downloadImageTo("images")
 
-	bar = progressbar.ProgressBar()
-	for i in bar(range(int(len(paintings) / batchSize))):
-		batch = paintings[i * batchSize : (i+1) * batchSize]
-		Pool(batchSize).map(downloadPainting, batch)
-
-	# Download any remainder paintings
-	if (len(paintings) % batchSize > 0):
-		batch = paintings[int(len(paintings) / batchSize) * batchSize :]
-		Pool(len(paintings) % batchSize).map(downloadPainting, batch)
+	pool = ThreadPool(batchSize)
+	pool.map(downloadPainting, paintings)
+	pool.close()
+	pool.join()
 
 	return [p for p in paintings if p.imageDownloaded("images")]
 
@@ -272,23 +269,36 @@ def generateDataset():
 		portraits += themesDict[portraitTheme]
 		del themesDict[portraitTheme]
 
-	portraits = downloadPaintings(portraits)
+	print("Downloading portraits...")
+	portraits = downloadPaintings(portraits[:1000])
 	print(str(len(portraits)) + " portraits downloaded")
 
 	minPaintingCount = min([len(themesDict[theme]) for theme in themesDict])
 
 	# Trim all remaining themes to the same size and gather them together
-	other = []
+	others = []
 	for theme in themesDict:
 		paintings = themesDict[theme]
 		random.shuffle(paintings)
-		other += paintings[:minPaintingCount]
-	random.shuffle(other)
+		others += paintings[:minPaintingCount]
+	random.shuffle(others)
 
-	other = downloadPaintings(other)
-	print(str(len(other)) + " other downloaded")
+	print("Downloading others...")
+	others = downloadPaintings(others)
+	print(str(len(others)) + " others downloaded")
+
+	# Remove any excess paintings
+	numExtras = len(portraits) - len(others)
+	for i in range(numExtras):
+		p = others[len(portraits) + i]
+		p.deleteImage("images")
+	others = others[:len(portraits)]
+
+	dataset = portraits + others
+	random.shuffle(dataset)
+	return dataset
 		
-generateDataset()
+print(len(generateDataset()))
 
 '''
 MAIN FUNCTION: createTrainValTestDatasets():
