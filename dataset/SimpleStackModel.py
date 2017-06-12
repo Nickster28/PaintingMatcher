@@ -21,10 +21,8 @@ class SimpleStackModel(PaintingThemeModel):
 
 		return {
 			"train": (tf.constant(trainFilenames), tf.constant(trainLabels)),
-			"train_size": len(trainInput),
 			"val": (tf.constant(valFilenames), tf.constant(valLabels)),
-			"test": (tf.constant(testFilenames), tf.constant(testLabels)),
-			"test_themes": testThemes
+			"test": (tf.constant(testFilenames), tf.constant(testLabels))
 		}
 
 	def processInputData(self, *args):
@@ -38,9 +36,6 @@ class SimpleStackModel(PaintingThemeModel):
 		resized_image = tf.image.resize_images(image, [224, 224])  # (2)		    
 
 		return resized_image, label
-
-	def vggInput(self, inputs):
-		return inputs[0]
 
 model = SimpleStackModel()
 model.train()

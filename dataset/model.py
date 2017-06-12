@@ -49,8 +49,9 @@ class PaintingThemeModel:
         raise NotImplementedError
 
     # Should add any additional graph components and return the input to VGG.
+    # Defaults to just returning the first input value.
     def vggInput(self, inputs):
-        raise NotImplementedError
+        return inputs[0]
 
     def check_accuracy(self, sess, correct_prediction, is_training,
         dataset_init_op):
@@ -224,7 +225,7 @@ class PaintingThemeModel:
                 while True:
                     try:
                         summary, _ = sess.run([merged_summary, train_op], {is_training: True})
-                        train_writer.add_summary(summary, epoch * dataset['train_size'] / args.batch_size + i)
+                        train_writer.add_summary(summary, epoch * int(train_dataset.shape[0]) / args.batch_size + i)
                         i += 1
                     except tf.errors.OutOfRangeError:
                         break
