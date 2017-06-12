@@ -62,7 +62,7 @@ class HistogramStackModel(PaintingThemeModel):
 
 		# Added: an additional layer taking our input tensors and reshaping them
 		conv_out = tf.layers.conv2d(imageTensor, 3, (7, 7), padding='same', activation=tf.nn.relu)
-		histogramTensor = tf.reshape(histogramTensor, [-1, 96])
+		histogramTensor = tf.reshape(histogramTensor, [-1, 48])
 		hist_out = tf.layers.dense(histogramTensor, 224, activation=tf.nn.relu)
 		hist_out = tf.reshape(hist_out, [-1, 224, 1, 1])
 		return conv_out + hist_out
