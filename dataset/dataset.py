@@ -284,6 +284,14 @@ pairs, pairs are evenly-weighted among all possible combinations of themes.
 '''
 def generatePairsDataset(numPairs, themesToUse=None):
 
+	# Load the dataset from the pickle file or from dataset.csv as a backup
+	try:
+		themesDict = pickle.load(open("dataset.pickle", "rb"))
+	except:
+		themesDict = parse('dataset.csv')
+		pickle.dump(themesDict, open("dataset.pickle", "wb"))
+
+
 	# If no themes specified, use all of them
 	if not themesToUse:
 		themesToUse = themesDict.keys()
@@ -291,13 +299,6 @@ def generatePairsDataset(numPairs, themesToUse=None):
 	themeCombos = [c for c in itertools.combinations(themesToUse, 2)]
 	assert(numPairs % (2 * len(themeCombos)) == 0)
 	assert(numPairs % (2 * len(themesToUse)) == 0)
-
-	# Load the dataset from the pickle file or from dataset.csv as a backup
-	try:
-		themesDict = pickle.load(open("dataset.pickle", "rb"))
-	except:
-		themesDict = parse('dataset.csv')
-		pickle.dump(themesDict, open("dataset.pickle", "wb"))
 
 	# Trim down to only themesToUse, where each theme has equal # of paintings
 	themesDict = trimThemesDict(themesDict, themesToUse)
