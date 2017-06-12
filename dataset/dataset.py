@@ -229,7 +229,9 @@ Parameters:
 	paintings - the list of painting objects to download images for
 
 Returns: a subset of paintings that have had their images downloaded to the
-images/ directory.  Images are downloaded in parallel.
+images/ directory.  Images are downloaded in parallel.  Thanks to
+http://chriskiehl.com/article/parallelism-in-one-line/ for guide to parallel
+programming in Python.
 ---------------------------
 '''
 def downloadPaintings(paintings, batchSize=50):
@@ -254,7 +256,6 @@ are portraits (male + female) and 50% of which are non-portraits, chosen
 equally from all other themes with >= 100 samples.
 ------------------------------
 '''
-
 def generateDataset():
 	themesDict = parse('dataset.csv')
 
@@ -270,7 +271,7 @@ def generateDataset():
 		del themesDict[portraitTheme]
 
 	print("Downloading portraits...")
-	portraits = downloadPaintings(portraits[:1000])
+	portraits = downloadPaintings(portraits)
 	print(str(len(portraits)) + " portraits downloaded")
 
 	minPaintingCount = min([len(themesDict[theme]) for theme in themesDict])
@@ -288,7 +289,7 @@ def generateDataset():
 	print(str(len(others)) + " others downloaded")
 
 	# Remove any excess paintings
-	numExtras = len(portraits) - len(others)
+	numExtras = len(others) - len(portraits)
 	for i in range(numExtras):
 		p = others[len(portraits) + i]
 		p.deleteImage("images")
@@ -298,7 +299,6 @@ def generateDataset():
 	random.shuffle(dataset)
 	return dataset
 		
-print(len(generateDataset()))
 
 '''
 MAIN FUNCTION: createTrainValTestDatasets():
@@ -306,19 +306,16 @@ MAIN FUNCTION: createTrainValTestDatasets():
 Parameters: NA
 Returns: NA
 
-Generates 360,000 random unique pairs of paintings from 10 chosen themes, splits
-these pairs into thirds, and outputs each third to file as train/val/test data.
-The outputted data is a Pickle file serializing a list of lists, each internal
-list containing [PAINTING1, PAINTING2, LABEL].
+
 ---------------------------------------
 '''
 def createTrainValTestDatasets():
 	# Load the dataset from the pickle file or recreate as a backup
 	try:
-		dataset = pickle.load(open("pruneddataset.pickle", "rb"))
+		dataset = pickle.load(open("downloadedDataset.pickle", "rb"))
 	except:
 		dataset = generateDataset()
-		pickle.dump(dataset, open("trainvaltestdataset.pickle", "wb"))
+		pickle.dump(dataset, open("downloadedDataset.pickle", "wb"))
 
 	labeledDataset = []
 
