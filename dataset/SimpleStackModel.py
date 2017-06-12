@@ -21,6 +21,7 @@ class SimpleStackModel(PaintingThemeModel):
 
 		return {
 			"train": (tf.constant(trainFilenames), tf.constant(trainLabels)),
+			"train_size": len(trainInput),
 			"val": (tf.constant(valFilenames), tf.constant(valLabels)),
 			"test": (tf.constant(testFilenames), tf.constant(testLabels)),
 			"test_themes": testThemes
