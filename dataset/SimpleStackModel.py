@@ -15,14 +15,8 @@ class SimpleStackModel(PaintingThemeModel):
 		) = loadDatasetRaw(size=size)
 
 		trainFilenames = list(map(lambda p: "images/" + p.imageFilename(), trainInput))
-		trainFilenames = tf.constant(trainFilenames)
-
 		valFilenames = list(map(lambda p: "images/" + p.imageFilename(), valInput))
-		valFilenames = tf.constant(valFilenames)
-
 		testFilenames = list(map(lambda p: "images/" + p.imageFilename(), testInput))
-		testFilenames = tf.constant(testFilenames)
-
 		testThemes = list(map(lambda p: p.theme, testInput))
 
 		return {
