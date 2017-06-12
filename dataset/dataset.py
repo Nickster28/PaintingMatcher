@@ -309,16 +309,23 @@ the format (PAINTING, SCORE).
 
 Labels the downloaded dataset and splits it into 2/5 train, 2/5 val, and 1/5
 test datasets.  Each dataset is a list of tuples where the first entry is a
-painting and the second entry is the score (PORTRAIT or NON_PORTRAIT).
+painting and the second entry is the score (PORTRAIT or NON_PORTRAIT).  The
+painting images have not been modified other than converting 1-channel grayscale
+images to 3-channel RGB images.
 ---------------------------------------
 '''
 def createTrainValTestDatasets():
 	# Load the dataset from the pickle file or recreate as a backup
 	try:
 		dataset = pickle.load(open("downloadedDataset.pickle", "rb"))
-	except:
+	except IOError as e:
 		dataset = generateDataset()
 		pickle.dump(dataset, open("downloadedDataset.pickle", "wb"))
+
+	# Fix grayscale
+	bar = progressbar.ProgressBar()
+	for i in bar(range(len(dataset))):
+		dataset[i].fixGrayscale("images")
 
 	labeledDataset = [(p, PORTRAIT if p.theme in PORTRAIT_THEMES else NON_PORTRAIT) for p in dataset]
 		
@@ -342,21 +349,29 @@ FUNCTION: loadDatasetRaw
 ------------------------
 Parameters: NA
 Returns: a (train, val, test) tuple where each entry is a list of
-	(painting, score) tuples.  The painting images have not been modified
-	other than converting 1-channel grayscale images to 3-channel RGB images.
+	(painting, score) tuples.  
 ------------------------
 '''
-def loadDatasetRaw(numPairs):
+def loadDatasetRaw():
 	# Load the datasets from the pickle file or recreate as a backup
 	try:
 		train = pickle.load(open("train.pickle", "rb"), encoding='latin1')
 		val = pickle.load(open("val.pickle", "rb"), encoding='latin1')
 		test = pickle.load(open("test.pickle", "rb"), encoding='latin1')
-	except:
+	except IOError as e:
 		(train, val, test) = createTrainValTestDatasets()
 		pickle.dump(train, open("train.pickle", "wb"))
-		val = pickle.dump(val, open("val.pickle", "wb"))
-		test = pickle.dump(test, open("test.pickle", "wb"))
+		pickle.dump(val, open("val.pickle", "wb"))
+		pickle.dump(test, open("test.pickle", "wb"))
 
-	# TODO
+	trainInput = [entry[0] for entry in train]
+	trainLabels = [entry[1] for entry in train]
+	valInput = [entry[0] for entry in val]
+	valLabels = [entry[1] for entry in val]
+	testInput = [entry[0] for entry in test]
+	testLabels = [entry[1] for entry in test]
+
+	return (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
+
+loadDatasetRaw()
 
