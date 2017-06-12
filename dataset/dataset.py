@@ -7,11 +7,14 @@ theme dataset.  The main functions you will probably want to use are:
 * createTrainValTestDatasets: this function reads in the dataset from
 dataset.csv and saves to file 3 pickle files: train.pickle, val.pickle, and
 test.pickle.  Each pickle file is a list of lists, where each inner list has the
-format [PAINTING, PAINTING, SCORE].  each the paintings are Painting objects,
-and the score is SAME_THEME (1) or DIFFERENT_THEME (0).  There are 120K pairs in
-each pickle file.
+format [PAINTING, SCORE].  each of the paintings are Painting objects,
+and the score is PORTRAIT (1) or NON_PORTRAIT (0).  3/5 of the samples are put
+into train, 1/5 into val, and 1/5 into test.
 
-* 
+* loadDatasetRaw: this function returns a list of (trainInput, trainLabels,
+valInput, valLabels, testInput, testLabels) where each entry is a list of either
+Painting objects or ints (PORTRAIT or NON_PORTRAIT).  3/5 of the samples are
+put into train, 1/5 into val, and 1/5 into test.
 ----------------
 '''
 
@@ -349,7 +352,8 @@ FUNCTION: loadDatasetRaw
 ------------------------
 Parameters: NA
 Returns: a (trainInput, trainLabels, valInput, valLabels, testInput, testLabels)
-list where each entry is a list of (painting, score) tuples.  
+list where each entry is either a list of Painting objects (input) or a list of
+scores (label).
 ------------------------
 '''
 def loadDatasetRaw():
