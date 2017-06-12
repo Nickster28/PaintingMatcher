@@ -29,10 +29,10 @@ class PaintingThemeModel:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('--batch_size', default=32, type=int)
-        self.parser.add_argument('--dataset_size', default=64, type=int)
+        self.parser.add_argument('--dataset_size', default=-1, type=int)
         self.parser.add_argument('--num_workers', default=4, type=int)
         self.parser.add_argument('--num_epochs', default=10, type=int)
-        self.parser.add_argument('--learning_rate', default=1e-5, type=float)
+        self.parser.add_argument('--learning_rate', default=0.1, type=float)
         self.parser.add_argument('--dropout_keep_prob', default=0.5, type=float)
         self.parser.add_argument('--weight_decay', default=5e-4, type=float)
         self.parser.add_argument('--log_dir', default='log', type=str)
