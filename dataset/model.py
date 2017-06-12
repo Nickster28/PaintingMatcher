@@ -225,7 +225,7 @@ class PaintingThemeModel:
                 while True:
                     try:
                         summary, _ = sess.run([merged_summary, train_op], {is_training: True})
-                        train_writer.add_summary(summary, epoch * int(train_dataset.shape[0]) / args.batch_size + i)
+                        train_writer.add_summary(summary, epoch * int(dataset["train"][0].shape[0]) / args.batch_size + i)
                         i += 1
                     except tf.errors.OutOfRangeError:
                         break
