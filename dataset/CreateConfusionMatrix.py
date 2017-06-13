@@ -52,9 +52,9 @@ def run(file):
 			if correct:
 				matrix[0][themeIndex] += 1
 			else:
-				print("Thought was portrait: " + painting.id)
+				print("Thought was portrait: " + str(painting.id))
 		elif testLabels[i] == PORTRAIT and not correct:
-			print("Thought was not portrait: " + painting.id)
+			print("Thought was not portrait: " + str(painting.id))
 
 	matrix /= countMatrix
 	matrix *= 100.0
