@@ -54,10 +54,11 @@ def run(file):
 
 	matrix /= countMatrix
 	matrix *= 100.0
+	matrix = matrix.round(decimals=2)
 
 	np.set_printoptions(precision=2)
 	plt.figure()
-	plot_confusion_matrix(matrix, classes=themesList, title='Theme Grades (/100)')
+	plot_confusion_matrix(matrix, classes=themesList, title='Model Theme Performance (/100)')
 	plt.show()
 
 
