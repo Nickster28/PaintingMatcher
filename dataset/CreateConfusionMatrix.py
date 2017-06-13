@@ -5,24 +5,17 @@ from collections import Counter
 import itertools
 import matplotlib.pyplot as plt
 
-
+# http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
 def plot_confusion_matrix(cm, classes,
-                          normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
+
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.yticks(np.arange(1), [""])
     plt.xticks(tick_marks, classes, rotation=45)
-
-    print('Confusion matrix, without normalization')
-    print(cm)
 
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
@@ -34,7 +27,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Painting theme')
 
 
-def createConfusionMatrix(file):
+def run(file):
 	if file is None:
 		print("Error: missing data file (--dataFile flag)")
 		return
@@ -63,4 +56,4 @@ def createConfusionMatrix(file):
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataFile', type=str)
 args = parser.parse_args()
-createConfusionMatrix(args.dataFile)
+run(args.dataFile)
