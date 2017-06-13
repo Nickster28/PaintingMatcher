@@ -51,6 +51,10 @@ def run(file):
 			countMatrix[0][themeIndex] += 1
 			if correct:
 				matrix[0][themeIndex] += 1
+			else:
+				print("Thought was portrait: " + painting.id)
+		elif testLabels[i] == PORTRAIT and not correct:
+			print("Thought was not portrait: " + painting.id)
 
 	matrix /= countMatrix
 	matrix *= 100.0
