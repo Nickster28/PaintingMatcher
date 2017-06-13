@@ -36,20 +36,28 @@ def run(file):
 	data = np.load(args.dataFile)
 	(_, _, _, _, testInput, testLabels) = loadDatasetRaw()
 
-	themesList = list(set([p.theme for p in testInput]) - set(PORTRAIT_THEMES))
+	#themesList = list(set([p.theme for p in testInput]) - set(PORTRAIT_THEMES))
+	themesList = ['children portraits', 'seas-and-oceans', 'cliffs-and-rocks',
+		'female-nude', 'boats-and-ships', 'animals', 'cottages-and-farmhouses']
 	
 	matrix = np.zeros((1, len(themesList)))
+	countMatrix = np.zeros((1, len(themesList)))
 
 	for i in range(len(data)):
 		correct = data[i]
 		painting = testInput[i]
-		if testLabels[i] is not PORTRAIT:
+		if testLabels[i] is not PORTRAIT and painting.theme in themesList:
 			themeIndex = themesList.index(painting.theme)
-			matrix[0][themeIndex] += 1 if correct else -1
+			countMatrix[0][themeIndex] += 1
+			if correct:
+				matrix[0][themeIndex] += 1
+
+	matrix /= countMatrix
+	matrix *= 100.0
 
 	np.set_printoptions(precision=2)
 	plt.figure()
-	plot_confusion_matrix(matrix, classes=themesList, title='Per-theme grade')
+	plot_confusion_matrix(matrix, classes=themesList, title='Theme Grades (/100)')
 	plt.show()
 
 
