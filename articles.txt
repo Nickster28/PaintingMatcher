@@ -1,16 +1,1 @@
-http://elidavid.com/pubs/deeppainter.pdf (Painter classification)
-	- "For this reason, computer vision techniques which are capable of identifying shapes and objects in an image are not sufficiently effective for solving the problem."
-	- "Thus, using CNNs for end-to-end painter classification is problematic, due to a smaller number of training samples available per painter (usually from a few tens of paintings to at most a few hundred paintings for more prolific painters)."
-	- use autoencoder
-
 https://arxiv.org/pdf/1505.00855.pdf
-	- Painter-specific techniques vs. genre-specific techniques
-	- List of genres they use is limited
-
-https://www.ripublication.com/ijaer17/ijaerv12n4_17.pdf
-http://delivery.acm.org/10.1145/2600000/2598287/p1143-levy.pdf
-http://cs231n.stanford.edu/reports/2016/pdfs/200_Report.pdf
-https://www.cs.tau.ac.il/~wolf/papers/genrestyle.pdf
-http://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
-http://cs231n.stanford.edu/reports/2016/pdfs/201_Report.pdf
-https://www.sfmoma.org/exhibition/paul-klee-and-rex-ray/

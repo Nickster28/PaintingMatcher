@@ -2,169 +2,35 @@
 FILE: dataset.py
 ----------------
 This file contains functions to parse, generate, and preprocess the paintings
-theme dataset.  The main functions you will probably want to use are:
+theme dataset.  The main functions to use are:
 
 * createTrainValTestDatasets: this function reads in the dataset from
 dataset.csv and saves to file 3 pickle files: train.pickle, val.pickle, and
 test.pickle.  Each pickle file is a list of lists, where each inner list has the
-format [PAINTING, PAINTING, SCORE].  each the paintings are Painting objects,
+format [PAINTING, PAINTING, SCORE].  Each of the paintings are Painting objects,
 and the score is SAME_THEME (1) or DIFFERENT_THEME (0).  There are 120K pairs in
 each pickle file.
 
-* 
+* loadDatasetRaw: loads in the train, val, and test datasets from the previous
+function above to use to run the model.  It loads in the pickle files, fixes
+any grayscale issues (see code for more details), and returns the data in the
+following format: [train-pairs, train-labels, val-pairs, val-labels, test-pairs, test-labels],
+where each pair is in the format [PAINTING, PAINTING] and each label is either
+SAME_THEME (1) or DIFFERENT_THEME (0).
 ----------------
 '''
 
-
 import csv
-import urllib
 from collections import defaultdict
 import pickle
 import random
 import progressbar
-import os
 import itertools
-from PIL import Image
-from scipy import misc
-import numpy as np
+from painting import Painting
 
 # Classification labels for themes
 SAME_THEME = 1
 DIFFERENT_THEME = 0
-
-
-    #######################################################################
-    ########################## UTILITY CLASSES ############################
-    #######################################################################
-
-
-'''
-CLASS: Painting
-----------------
-A class representing a single painting.  A painting has the following data
-associated with it:
-	- theme (e.g. "musical-instruments")
-	- title (e.g. "A Turkish Girl")
-	- artist (e.g. "Karl Bryullov")
-	- style (e.g. "Romanticism")
-	- genre (e.g. "portrait")
-	- wiki URL
-	- image URL
-----------------
-'''
-class Painting:
-
-	# A static counter that assigns a unique id to each created painting
-	paintingID = 0
-
-	'''
-	init
-	--------------
-	Parameters:
-		dataList - a length-7 list containing the row of data for the painting
-		to be created.  The row should have the format:
-
-		[theme, title, artist, style, genre, wiki url, image url]
-	--------------
-	'''
-	def __init__(self, dataList):
-		self.id = Painting.paintingID
-		Painting.paintingID += 1
-
-		self.theme = dataList[0]
-		self.title = dataList[1]
-		self.artist = dataList[2]
-		self.style = dataList[3]
-		self.genre = dataList[4]
-		self.wikiURL = dataList[5]
-		self.imageURL = dataList[6]
-		self.grayscaleFixed = False
-
-	'''
-	METHOD: imageFilename
-	---------------------
-	Parameters: NA
-	Returns: the name of the image file to use for this painting.
-	---------------------
-	'''
-	def imageFilename(self):
-		return str(self.id) + ".jpg"
-
-	'''
-	METHOD: downloadImageTo
-	---------------------
-	Parameters:
-		directory - the directory in which to save this image
-
-	Returns: NA
-
-	Attempts to download the image for this painting into the given directory if
-	it has not been downloaded to this location already (in which case we do
-	nothing).  The image will be saved as ID.jpg, where ID is the ID of this
-	painting.  If the download fails, an exception is thrown.
-	---------------------
-	'''
-	def downloadImageTo(self, directory):
-		fullFilename = directory + "/" + self.imageFilename()
-		if not os.path.isfile(fullFilename):
-			urllib.urlretrieve(self.imageURL, fullFilename)
-
-	'''
-	METHOD: deleteImageFile
-	-----------------------
-	Parameters:
-		directory - the directory in which to delete this painting's image.
-	Returns: NA
-
-	If the file exists, deletes our image file on disk in the given directory.
-	-----------------------
-	'''
-	def deleteImageFile(self, directory):
-		fullFilename = directory + "/" + self.imageFilename()
-		if os.path.isfile(fullFilename):
-			os.remove(fullFilename)
-
-	'''
-	METHOD: fixGrayscale
-	--------------------
-	Parameters:
-		directory - the directory in which to fix the grayscale structure.
-	Returns: NA
-
-	If the image has not already been doctored, check if it has only 1 channel
-	(aka grayscale).  If it does, convert it to 3 channels and mark it as
-	fixed.
-	--------------------
-	'''
-	def fixGrayscale(self, directory):
-		if self.grayscaleFixed:
-			return
-
-		image = misc.imread(directory + "/" + self.imageFilename())
-		if len(image.shape) != 3:
-		    newImage = np.zeros(image.shape + (3,))
-		    for row in range(image.shape[0]):
-		        for col in range(image.shape[1]):
-		            newImage[row][col][0] = image[row][col]
-		            newImage[row][col][1] = image[row][col]
-		            newImage[row][col][2] = image[row][col]
-		    misc.imsave(directory + "/" + self.imageFilename(), newImage)
-
-		self.grayscaleFixed = True
-
-	'''
-	METHOD: repr
-	------------
-	Parameters: NA
-	Returns: a string representation of this painting of the format 
-		ID,FILENAME,THEME,TITLE,ARTIST,STYLE,GENRE,WIKIURL,IMAGEURL
-	------------
-	'''
-	def __repr__(self):
-		return ",".join([str(self.id), self.imageFilename(), self.theme,
-			self.title, self.artist, self.style, self.genre, self.wikiURL,
-			self.imageURL])
-
 
     #######################################################################
     ######################## DATASET GENERATION ###########################
@@ -175,16 +41,22 @@ class Painting:
 FUNCTION: parse
 ---------------
 Parameters:
-	datasetFile - the filename to parse containing painting data
+	datasetFile - the CSV filename to parse containing painting data.
+					Assumed to be a file in the format of dataset.csv,
+					where each row is a painting with the following information: 
+					[theme, title, artist, style, genre, wiki url, image url]
 
 Returns: a map from theme name to list of Painting objects in the dataset with
-that theme name.
+that theme name, randomly shuffled.
 ---------------
 '''
 def parse(datasetFile):
 	with open(datasetFile, 'rb') as csvfile:
 		reader = csv.reader(csvfile, delimiter=',')
+
+		# Skip any paintings without an image URL
 		rows = [row for row in reader if row[6].startswith("http")][1:]
+
 		paintings = [Painting(row) for row in rows]
 		random.shuffle(paintings)
 
@@ -280,6 +152,12 @@ SAME pairs (pairs of paintings with the same theme), and 50% are DIFFERENT
 pairs (pairs of paintings with different themes).  Within the 50% of SAME pairs,
 pairs are evenly-weighted between each theme.  Within the 50% of DIFFERENT
 pairs, pairs are evenly-weighted among all possible combinations of themes.
+
+Relies on a dictionary of paintings categorized into themes, which is read
+in from dataset.pickle.  If the file doesn't exist, this function reads in
+dataset.csv and creates dataset.pickle from that before proceeding.  Assumed
+that dataset.csv has each row as a painting with the following information: 
+[theme, title, artist, style, genre, wiki url, image url]
 ------------------------------
 '''
 def generatePairsDataset(numPairs, themesToUse=None):
@@ -402,9 +280,12 @@ def createTrainValTestDatasets():
 '''
 FUNCTION: loadDatasetRaw
 ------------------------
-Parameters: NA
-Returns: a (train, val, test) tuple where each entry is a list of
-	[painting, painting, score].  The painting images have not been modified
+Parameters:
+	numPairs - the number of pairs to have in the training dataset.  The val/test
+				datasets are made to have 1/4 of this number each.
+Returns: a list of [train-pairs, train-labels, val-pairs, val-labels, test-pairs, test-labels]
+    where each pair entry is a pair of paintings, and each label entry is either
+    SAME_THEME or DIFFERENT_THEME.  The painting images have not been modified
 	other than converting 1-channel grayscale images to 3-channel RGB images.
 	If the pickle files for train/val/test do not exist, returns an empty tuple.
 ------------------------
