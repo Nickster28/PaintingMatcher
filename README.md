@@ -33,6 +33,16 @@ pip install -r requirements.txt
 _Note_: if you have issues installing Pillow, see [this link](https://pillow.readthedocs.io/en/3.0.0/installation.html).
 
 ## Dataset
+The `create_dataset_files.py` program runs the logic to generate a file for each of the train/test/val datasets from the provided `dataset.csv` file.  Specifically, it will generate `train.pickle`, `val.pickle` and `test.pickle` files that store information about the test cases, as well as downloading the images for them from the internet into the `images/` folder.
+
+## Running
+There are several different models used as experiments for this project.  The core model is in `model.py`, which is the generic model that all models extend.  There are several specific model types that build on this.  Each one specifies its variation of the input dataset, what a single row looks like, and what the output from the network should look like.
+
++ `SimpleStackModel.py`: A baseline model that is just the VGG architecture
+
++ `HistogramStackModel.py`: A model with an additional layer that includes a color histogram
+
++ `TitlesStackModel.py`: 
 
 
 
