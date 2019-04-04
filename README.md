@@ -34,6 +34,8 @@ Whenever you would like to work with this project, activate your virtual environ
 pip install -r requirements.txt
 ```
 
+_Note_: if you have issues installing Pillow, see [this link](https://pillow.readthedocs.io/en/3.0.0/installation.html).
+
 ## Dataset
 
 
