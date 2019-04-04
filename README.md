@@ -40,11 +40,11 @@ There are several different models used as experiments for this project, which a
 
 + `SimpleResizeModel.py`: A baseline model that is just the VGG architecture with input as resized images
 
-+ `HistogramResizeModel.py`: A model with an additional layer that includes a color histogram
++ `HistogramResizeModel.py`: A model that includes a color histogram for the image
 
-+ `GramResizeModel.py`: A model with an additional layer that includes a Gram matrix
++ `GramResizeModel.py`: A model that includes a Gram matrix for the image
 
-+ `GramHistoResizeModel.py`: A model that includes both a Gram matrix and color histogram
++ `GramHistoResizeModel.py`: A model that includes both a Gram matrix and color histogram for the image
 
 
 
