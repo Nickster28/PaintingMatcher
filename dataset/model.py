@@ -268,3 +268,4 @@ class PaintingThemeModel:
             print('Test accuracy: %f' % test_acc)
 
             train_writer.close()
+
