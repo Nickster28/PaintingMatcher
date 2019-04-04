@@ -4,12 +4,12 @@ argparse==1.2.1
 decorator==4.0.6
 future==0.16.0
 matplotlib==2.0.0
-numpy==1.10.4
+numpy==1.11.0
 pickleshare==0.5
 python-dateutil==2.4.2
 scipy==0.16.1
 six==1.10.0
-tensorflow-gpu==1.2.0rc0
+tensorflow==1.2.0rc0
 progressbar2==3.30.2
 virtualenv==15.1.0
 sklearn==0.0
