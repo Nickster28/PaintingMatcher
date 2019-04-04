@@ -141,23 +141,23 @@ class PaintingThemeModel:
             dataset = self.getDataset()
 
             # Training dataset
-            train_dataset = tf.data.Dataset.from_tensor_slices(dataset["train"])
+            train_dataset = tf.contrib.data.Dataset.from_tensor_slices(dataset["train"])
             train_dataset = train_dataset.map(self.processInputData,
-                num_parallel_calls=args.num_workers)
+                num_threads=args.num_workers, output_buffer_size=args.batch_size)
             # don't forget to shuffle
             train_dataset = train_dataset.shuffle(buffer_size=10000)
             batched_train_dataset = train_dataset.batch(args.batch_size)
 
             # Validation dataset
-            val_dataset = tf.data.Dataset.from_tensor_slices(dataset["val"])
+            val_dataset = tf.contrib.data.Dataset.from_tensor_slices(dataset["val"])
             val_dataset = val_dataset.map(self.processInputData,
-                num_parallel_calls=args.num_workers)
+                num_threads=args.num_workers, output_buffer_size=args.batch_size)
             batched_val_dataset = val_dataset.batch(args.batch_size)
 
             # Test dataset
-            test_dataset = tf.data.Dataset.from_tensor_slices(dataset["test"])
+            test_dataset = tf.contrib.data.Dataset.from_tensor_slices(dataset["test"])
             test_dataset = test_dataset.map(self.processInputData,
-                num_parallel_calls=args.num_workers)
+                num_threads=args.num_workers, output_buffer_size=args.batch_size)
             batched_test_dataset = test_dataset.batch(args.batch_size)
 
             """
@@ -176,7 +176,7 @@ class PaintingThemeModel:
             compatible.
             --------------------------------------------------------------------
             """
-            iterator = tf.data.Iterator.from_structure(batched_train_dataset.output_types,
+            iterator = tf.contrib.data.Iterator.from_structure(batched_train_dataset.output_types,
                                                                batched_train_dataset.output_shapes)
             iterator_output = iterator.get_next()
             model_inputs = iterator_output[:-1]
@@ -268,4 +268,3 @@ class PaintingThemeModel:
             print('Test accuracy: %f' % test_acc)
 
             train_writer.close()
-
