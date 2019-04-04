@@ -1,0 +1,126 @@
+python RunModel.py --model=GramResizeModel
+----
+
+Starting epoch 1 / 10
+2017-06-13 04:00:57.971166: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:00:57.971180: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:00:57.971185: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.623695
+Val accuracy: 0.628248
+
+Starting epoch 2 / 10
+2017-06-13 04:16:30.829665: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:16:30.829668: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:16:30.829776: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.707639
+Val accuracy: 0.724184
+
+Starting epoch 3 / 10
+Train accuracy: 0.753165
+Val accuracy: 0.763491
+
+Starting epoch 4 / 10
+2017-06-13 04:39:00.889789: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:39:00.889804: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:39:00.889810: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:41:52.686014: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:41:52.686022: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:41:52.686127: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:41:52.686742: I tensorflow/core/common_runtime/gpu/pool_allocator.cc:247] PoolAllocator: After 71346 get requests, put_count=71346 evicted_count=1000 eviction_rate=0.0140162 and unsatisfied allocation rate=0.0154178
+2017-06-13 04:41:52.686770: I tensorflow/core/common_runtime/gpu/pool_allocator.cc:259] Raising pool_size_limit_ from 100 to 110
+Train accuracy: 0.781035
+Val accuracy: 0.778481
+
+Starting epoch 5 / 10
+2017-06-13 04:51:42.078425: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:51:42.078433: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:51:42.078439: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:54:33.505319: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 04:54:33.505425: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.795470
+Val accuracy: 0.786143
+
+Starting epoch 6 / 10
+2017-06-13 05:07:14.499729: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:07:14.499744: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:07:14.499826: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:08:08.591804: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.795470
+Val accuracy: 0.792805
+
+Starting epoch 7 / 10
+2017-06-13 05:19:55.721422: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:19:55.721425: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:19:55.721498: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:20:49.762228: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:20:49.762228: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.781923
+Val accuracy: 0.774484
+
+Starting epoch 8 / 10
+2017-06-13 05:32:36.407457: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:33:30.422360: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:33:30.422361: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:33:30.422535: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.787919
+Val accuracy: 0.765157
+
+Starting epoch 9 / 10
+2017-06-13 05:45:16.616096: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:45:16.616098: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:46:10.564648: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:46:10.564648: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:46:10.564744: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.821230
+Val accuracy: 0.794803
+
+Starting epoch 10 / 10
+2017-06-13 05:57:56.979476: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:57:56.979493: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.807129
+Val accuracy: 0.785143
+
+2017-06-13 05:59:45.181490: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:59:45.181490: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 05:59:45.181595: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	    [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1]], output_types=[DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Test accuracy: 0.783811

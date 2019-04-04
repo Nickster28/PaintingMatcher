@@ -1,0 +1,22 @@
+python RunModel.py --model=GramHistoResizeModel --num_epochs=2
+----
+
+Starting epoch 1 / 2
+2017-06-13 03:20:32.099786: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	 [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1,3,16], [-1]], output_types=[DT_FLOAT, DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 03:20:32.099789: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	 [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1,3,16], [-1]], output_types=[DT_FLOAT, DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+2017-06-13 03:21:28.653918: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	 [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1,3,16], [-1]], output_types=[DT_FLOAT, DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.721630
+Val accuracy: 0.731845
+
+Starting epoch 2 / 2
+2017-06-13 03:30:54.599715: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	 [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1,3,16], [-1]], output_types=[DT_FLOAT, DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Train accuracy: 0.742616
+Val accuracy: 0.750500
+
+2017-06-13 03:36:04.426179: W tensorflow/core/framework/op_kernel.cc:1158] Out of range: End of sequence
+	 [[Node: IteratorGetNext = IteratorGetNext[output_shapes=[[-1,224,224,3], [-1,3,16], [-1]], output_types=[DT_FLOAT, DT_FLOAT, DT_INT32], _device="/job:localhost/replica:0/task:0/cpu:0"](Iterator)]]
+Test accuracy: 0.756496
