@@ -1,7 +1,7 @@
 *.swp
 *.pyc
 .env/*
-dataset/images*
-dataset/coco-animals/*
-dataset/log
-dataset/vgg_16.ckpt
+
+
+
+
