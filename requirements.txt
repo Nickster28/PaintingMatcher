@@ -9,7 +9,7 @@ pickleshare==0.5
 python-dateutil==2.4.2
 scipy==0.16.1
 six==1.10.0
-tensorflow==1.2.0rc0
+tensorflow==2.5.1
 progressbar2==3.30.2
 virtualenv==15.1.0
 sklearn==0.0
